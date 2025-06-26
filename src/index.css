@@ -1,0 +1,517 @@
+/* 导入专业字体 - 必须放在最前面 */
+@import url("https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Nunito:wght@400;600;700;800&family=Comic+Neue:wght@400;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 调试模式：为各个容器添加彩色边框 */
+.debug-mode .word-card {
+  border: 3px solid #ff0000 !important; /* 红色：整个卡片容器 */
+}
+
+.debug-mode .card-image-container {
+  border: 3px solid #00ff00 !important; /* 绿色：图片容器 */
+}
+
+.debug-mode .card-text-area {
+  border: 3px solid #0000ff !important; /* 蓝色：文字区域容器 */
+}
+
+.debug-mode .four-line-grid {
+  border: 3px solid #ff00ff !important; /* 紫色：四线三格容器 */
+}
+
+.debug-mode .phonetic-text {
+  border: 2px solid #ffff00 !important; /* 黄色：音标容器 */
+  background-color: rgba(255, 255, 0, 0.1) !important;
+}
+
+.debug-mode .phonics-container {
+  border: 2px solid #00ffff !important; /* 青色：拼读容器 */
+  background-color: rgba(0, 255, 255, 0.1) !important;
+}
+
+/* 四线三格背景样式 - 超清晰版本 */
+.four-line-grid {
+  position: relative;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 20%,
+    #9ca3af 20%,
+    #9ca3af 21%,
+    transparent 21%,
+    transparent 40%,
+    #9ca3af 40%,
+    #9ca3af 41%,
+    transparent 41%,
+    transparent 60%,
+    #dc2626 60%,
+    #dc2626 61.5%,
+    transparent 61.5%,
+    transparent 80%,
+    #9ca3af 80%,
+    #9ca3af 81%,
+    transparent 81%,
+    transparent 100%
+  );
+
+  /* 更清晰的虚线效果 */
+  background-image: repeating-linear-gradient(
+      to right,
+      transparent 0px,
+      transparent 6px,
+      rgba(156, 163, 175, 0.9) 6px,
+      rgba(156, 163, 175, 0.9) 10px
+    ),
+    repeating-linear-gradient(
+      to right,
+      transparent 0px,
+      transparent 6px,
+      rgba(156, 163, 175, 0.9) 6px,
+      rgba(156, 163, 175, 0.9) 10px
+    ),
+    repeating-linear-gradient(
+      to right,
+      transparent 0px,
+      transparent 6px,
+      rgba(220, 38, 38, 1) 6px,
+      rgba(220, 38, 38, 1) 10px
+    ),
+    repeating-linear-gradient(
+      to right,
+      transparent 0px,
+      transparent 6px,
+      rgba(156, 163, 175, 0.9) 6px,
+      rgba(156, 163, 175, 0.9) 10px
+    );
+
+  background-position: 0 20%, 0 40%, 0 60%, 0 80%;
+
+  background-size: 100% 1px, 100% 1px, 100% 1.5px, 100% 1px;
+
+  background-repeat: repeat-x;
+  padding: 12px 16px;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* 关键设置：85%宽度，上边距0px，下边距0px */
+  width: 85%;
+  margin: 0px auto 0px auto;
+  background-color: transparent;
+}
+
+/* 四线三格字体样式 - 专业手写体 */
+.four-line-font {
+  font-family: "Kalam", "Comic Neue", "Comic Sans MS", cursive;
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: 0.05em;
+  text-align: center;
+  color: #1f2937;
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 不同尺寸的四线三格字体 */
+.four-line-font-sm {
+  font-size: 1.5rem; /* 24px */
+}
+
+.four-line-font-md {
+  font-size: 2rem; /* 32px */
+}
+
+.four-line-font-lg {
+  font-size: 2.5rem; /* 40px */
+}
+
+.four-line-font-xl {
+  font-size: 3rem; /* 48px */
+}
+
+/* 卡片容器样式 - 倒角改为8px */
+.word-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 8px; /* 从16px改为8px */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.word-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
+  border-radius: 8px 8px 0 0; /* 从16px改为8px */
+}
+
+.word-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-color: #cbd5e1;
+}
+
+/* 图片容器样式 - 50%高度 */
+.card-image-container {
+  height: 50%;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.card-image-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  pointer-events: none;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.card-image-container:hover .card-image {
+  transform: scale(1.05);
+}
+
+/* 音标样式 - 上边距0px，下边距6px */
+.phonetic-text {
+  font-family: "Nunito", sans-serif;
+  font-weight: 600;
+  color: #3b82f6;
+  font-size: 0.9rem;
+  display: inline-block;
+  margin-top: 0px;
+  margin-bottom: 6px;
+}
+
+/* 自然拼读彩色色块样式 - 20%透明度 */
+.phonics-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.phonics-block {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-family: "Kalam", cursive;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  min-width: 28px;
+  text-align: center;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 彩色色块颜色 - 20%透明度 */
+.phonics-block:nth-child(1) {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #1e40af;
+}
+.phonics-block:nth-child(2) {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
+.phonics-block:nth-child(3) {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #059669;
+}
+.phonics-block:nth-child(4) {
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #d97706;
+}
+.phonics-block:nth-child(5) {
+  background-color: rgba(139, 92, 246, 0.2);
+  color: #7c3aed;
+}
+.phonics-block:nth-child(6) {
+  background-color: rgba(6, 182, 212, 0.2);
+  color: #0891b2;
+}
+.phonics-block:nth-child(7) {
+  background-color: rgba(132, 204, 22, 0.2);
+  color: #65a30d;
+}
+.phonics-block:nth-child(8) {
+  background-color: rgba(249, 115, 22, 0.2);
+  color: #ea580c;
+}
+
+/* 卡片背面样式 - 不垂直居中，顶部内边距20px */
+.card-back {
+  background: linear-gradient(145deg, #fefefe 0%, #f8fafc 100%);
+  padding: 20px 20px 20px 20px; /* 顶部20px，其他20px */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* 改为顶部对齐，不居中 */
+  text-align: center;
+}
+
+/* 中文释义样式 - 1.5rem字号，包含词性，行高1.0 */
+.meaning-text {
+  font-family: "Nunito", sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem; /* 24px */
+  color: #1e293b;
+  margin-bottom: 15px; /* 调整为15px，距离灰色框15px */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1; /* 行高1.0 */
+}
+
+/* 统一的灰色例句容器 - 固定大小，距离卡片下边缘20px，距离中文释义15px，左右边距10px */
+.unified-sentence-container {
+  background: #f1f5f9; /* 深一点的灰色 */
+  border: 1px solid #d1d5db;
+  border-radius: 8px; /* 从12px改为8px */
+  padding: 8px 8px; /* 从16px 20px改为8px 8px */
+  text-align: left; /* 左对齐，不居中 */
+
+  /* 固定大小和位置 - 距离中文释义15px，左右边距10px */
+  position: absolute;
+  bottom: 20px; /* 距离卡片下边缘20px */
+  left: 10px; /* 从15px改为10px */
+  right: 10px; /* 从15px改为10px */
+  top: calc(
+    20px + 1.5rem * 1 + 15px
+  ); /* 顶部内边距20px + 中文释义高度 + 15px间距 */
+  overflow-y: auto; /* 如果内容过多，允许滚动 */
+}
+
+/* 例句项目样式 - 带序号，左对齐 */
+.sentence-item {
+  margin-bottom: 12px;
+  font-family: "Nunito", sans-serif;
+  line-height: 1.5;
+}
+
+.sentence-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 英文例句样式 - 序号 + 内容，换行与句子开始对齐 */
+.sentence-number {
+  display: inline-block;
+  width: 20px;
+  font-weight: 700;
+  color: #6b7280;
+  font-size: 0.85rem;
+  vertical-align: top; /* 确保序号与文本顶部对齐 */
+}
+
+.sentence-english {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+  display: inline-block;
+  width: calc(100% - 20px); /* 减去序号的宽度 */
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+/* 中文翻译样式 - 21px左边距，2px上边距 */
+.sentence-chinese {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-left: 21px; /* 从24px改为21px */
+  margin-top: 2px; /* 从4px改为2px */
+  line-height: 1.5;
+}
+
+/* 保留原有样式以兼容 */
+.sentence-container {
+  space-y: 12px;
+}
+
+.english-sentence {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 1px solid #93c5fd;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-family: "Nunito", sans-serif;
+  font-weight: 600;
+  color: #1e40af;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+}
+
+.chinese-sentence {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #86efac;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-family: "Nunito", sans-serif;
+  font-weight: 600;
+  color: #166534;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
+}
+
+/* 空白卡片样式 - 倒角改为8px */
+.empty-card {
+  border: 2px dashed #cbd5e1;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 8px; /* 从16px改为8px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-family: "Nunito", sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.empty-card:hover {
+  border-color: #94a3b8;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+
+/* 文字区域样式 - 50%高度，上边距0px */
+.card-text-area {
+  height: 50%;
+  padding: 0px 16px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .four-line-font-md {
+    font-size: 1.75rem;
+  }
+
+  .meaning-text {
+    font-size: 1.3rem; /* 移动端从1.5rem调整为1.3rem */
+    margin-bottom: 12px; /* 移动端调整为12px */
+  }
+
+  .unified-sentence-container {
+    padding: 12px 16px;
+    bottom: 16px; /* 移动端距离下边缘16px */
+    left: 8px; /* 移动端左边距8px */
+    right: 8px; /* 移动端右边距8px */
+    top: calc(16px + 1.3rem * 1 + 12px); /* 移动端调整计算 */
+  }
+
+  .sentence-english {
+    font-size: 0.8rem;
+  }
+
+  .sentence-chinese {
+    font-size: 0.75rem;
+  }
+
+  .phonics-block {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    min-width: 24px;
+  }
+
+  .four-line-grid {
+    width: 85%;
+    margin: 0px auto 0px auto;
+    padding: 10px 12px;
+    min-height: 60px;
+  }
+
+  .card-text-area {
+    padding: 0px 12px 12px 12px;
+  }
+
+  .phonetic-text {
+    font-size: 0.8rem;
+    margin-top: 0px;
+    margin-bottom: 4px;
+  }
+
+  /* 移动端背面顶部内边距调整为16px */
+  .card-back {
+    padding: 16px 16px 16px 16px;
+  }
+}
+
+/* 动画效果 */
+@keyframes cardFlip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+.card-flip {
+  animation: cardFlip 0.6s ease-in-out;
+}
+
+/* 渐变文字效果 */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 卡片标题装饰 */
+.card-title-decoration {
+  position: relative;
+}
+
+.card-title-decoration::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 2px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 1px;
+}

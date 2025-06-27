@@ -1,6 +1,6 @@
 # 英语单词卡片生成器 MVP 需求文档
 
-> **版本 v1.7 — 2025-06-26（面向开发）**
+> **版本 v1.8 — 2024-12-26（面向开发）**
 
 ---
 
@@ -37,6 +37,7 @@
 负责将 Bolt 页面与核心逻辑联通：
 
 - CSV 解析与字段校验
+- 字典构建与查询（本地词库）
 - AI 补全（OpenAI / 词典 API）
 - 图片接入（Pexels API）
 - 自然拼读处理（音节拆分并颜色标记）
@@ -47,23 +48,66 @@
 
 - 页面状态管理（数据输入 → 卡片渲染 → 下载 PDF）
 - 网页组件与 PDF 组件共享数据结构，分离渲染逻辑
-- 所有字段优先使用 CSV 内容，缺失时自动调用 API 补全
-- **MVP 阶段保留当前 Vite 架构**，以最快完成闭环（上传 ➜ 预览 ➜ 导出 PDF）
-- **API 调用统一封装为本地代理服务**，防止密钥泄露：
-  - `/src/api/openai.ts`, `/src/api/image.ts` 等脚本封装实际调用逻辑
-  - API Key 存储在本地 `.env.local`，不直接暴露给前端
-  - 推荐使用 Vite dev server 中的本地服务，或部署到 Vercel / Netlify 的 Functions 目录进行托管
-- **注意：MVP 阶段无需独立部署完整后端服务器**，但必须具备“后端能力”以安全调用第三方 API。
-- PDF 使用 **react-pdf 优先实现**，确保网页预览与导出一致；如效果不佳，后续可切换至 `pdf-lib`，请封装渲染模块以便后期扩展。
+- **字段填充逻辑统一：先查本地词典，缺失字段再使用 AI 补全**
+- **AI 补全结果可写入用户词典文件（custom）供后续使用**
+- 本地词典可逐步扩展为完整学习资源库
 
 ---
 
-## 3 功能需求与设计
+## 3 字典系统设计说明（新增）
+
+### 总体策略
+
+1. 使用一批单词，通过 API（OpenAI）批量生成音标、释义、例句等字段；
+2. 保存为本地 JSON 文件，构成本地离线词典库；
+3. 系统运行时优先查本地词典库，缺失字段才调用 API 补齐；
+4. 补全后的字段可保存到自定义词典文件，长期复用。
+
+### 本地词典结构建议
+
+- `/public/dictionary.base.json`：系统初始化生成的词典
+- `/public/dictionary.custom.json`：用户新增词条、补全字段
+
+### 字典字段示例结构
+
+```json
+{
+  "apple": {
+    "ipa": "/ˈæpəl/",
+    "meaningCn": "苹果",
+    "sentenceEn": "I eat an apple every day.",
+    "sentenceCn": "我每天吃一个苹果。",
+    "phonics": ["ap", "ple"]
+  }
+}
+```
+
+### 查询逻辑
+
+```ts
+async function getWordEntry(word: string): Promise<WordEntry> {
+  const localEntry = await findInLocalDictionary(word);
+  if (localEntry) return localEntry;
+
+  const aiEntry = await fetchFromOpenAI(word);
+  if (aiEntry) saveToCustomDictionary(aiEntry);
+  return aiEntry;
+}
+```
+
+### 补全后保存建议
+
+- 用户新增或 AI 生成的词条存入 `custom.json`，可通过按钮“保存为我的词典”触发
+- 后期可支持打包导出词典、上传合并词典等扩展操作
+
+---
+
+## 4 功能需求与设计
 
 ### 数据输入
 
 - 上传 CSV 文件或手动录入：字段包括 `word, ipa, meaningCn, sentenceEn, sentenceCn, imageUrl`
-- `word` 为必填，其他字段缺失时自动补全（OpenAI + 图像 API）
+- `word` 为必填，其他字段缺失时自动补全（优先本地词典，再调用 OpenAI）
 - 提供“生成示例数据”功能便于测试与展示
 
 ### 卡片字段说明
@@ -97,7 +141,7 @@
 
 ---
 
-## 4 技术实现建议
+## 5 技术实现建议
 
 ### 技术架构
 
@@ -152,7 +196,7 @@ export interface WordEntry {
 
 ---
 
-## 5 非功能性要求
+## 6 非功能性要求
 
 - PDF 生成性能：50 词 ≤10秒
 - 字体：使用已授权 AU School 四线三格英文字体、思源宋体等嵌入字体
@@ -161,12 +205,12 @@ export interface WordEntry {
 
 ---
 
-## 6 项目排期（建议）
+## 7 项目排期（建议）
 
 | 日期    | 任务                   |
 | ----- | -------------------- |
 | 07-05 | 完成 CSV 解析与表格编辑 UI    |
-| 07-12 | 实现 AI 接入与拼读模块        |
+| 07-12 | 实现本地词典与 AI 补全功能      |
 | 07-19 | 对齐卡片样式并实现网页 + PDF 组件 |
 | 07-26 | 完成 PDF 导出功能          |
 | 07-31 | Bug 修复与上线测试          |

@@ -1,19 +1,5 @@
 import { WordCard } from '../types';
-
-// 格式化单词显示（除专有名词外都用小写）
-const formatWordForStorage = (word: string): string => {
-  const properNouns = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
-                      'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 
-                      'September', 'October', 'November', 'December', 'China', 'America', 'English'];
-  
-  const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-  
-  if (properNouns.includes(capitalizedWord)) {
-    return capitalizedWord;
-  }
-  
-  return word.toLowerCase();
-};
+import { splitPhonics, formatWordForStorage } from './dictionary';
 
 export const generateSampleWords = (): WordCard[] => {
   return [
@@ -25,7 +11,7 @@ export const generateSampleWords = (): WordCard[] => {
       sentenceEn: 'I eat an apple every day.',
       sentenceCn: '我每天吃一个苹果。',
       imageUrl: 'https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
-      phonics: 'ap-ple'
+      phonics: splitPhonics('apple')
     },
     {
       id: 'sample-2',
@@ -35,7 +21,7 @@ export const generateSampleWords = (): WordCard[] => {
       sentenceEn: 'This is a very interesting book.',
       sentenceCn: '这是一本非常有趣的书。',
       imageUrl: 'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
-      phonics: 'b-ook'
+      phonics: splitPhonics('book')
     },
     {
       id: 'sample-3',
@@ -45,7 +31,7 @@ export const generateSampleWords = (): WordCard[] => {
       sentenceEn: 'The cat is sleeping on the sofa.',
       sentenceCn: '猫正在沙发上睡觉。',
       imageUrl: 'https://images.pexels.com/photos/104827/cat-pet-animal-domestic-104827.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
-      phonics: 'c-at'
+      phonics: splitPhonics('cat')
     },
     {
       id: 'sample-4',
@@ -55,7 +41,7 @@ export const generateSampleWords = (): WordCard[] => {
       sentenceEn: 'My dog likes to play in the park.',
       sentenceCn: '我的狗喜欢在公园里玩耍。',
       imageUrl: 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
-      phonics: 'd-og'
+      phonics: splitPhonics('dog')
     },
     {
       id: 'sample-5',
@@ -65,7 +51,7 @@ export const generateSampleWords = (): WordCard[] => {
       sentenceEn: 'The elephant is the largest land animal.',
       sentenceCn: '大象是最大的陆地动物。',
       imageUrl: 'https://images.pexels.com/photos/66898/elephant-cub-tsavo-kenya-66898.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
-      phonics: 'el-e-phant'
+      phonics: splitPhonics('elephant')
     },
     {
       id: 'sample-6',
@@ -75,7 +61,7 @@ export const generateSampleWords = (): WordCard[] => {
       sentenceEn: 'She gave me a beautiful flower.',
       sentenceCn: '她给了我一朵美丽的花。',
       imageUrl: 'https://images.pexels.com/photos/56866/garden-rose-red-pink-56866.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
-      phonics: 'flow-er'
+      phonics: splitPhonics('flower')
     },
     {
       id: 'sample-7',
@@ -85,7 +71,7 @@ export const generateSampleWords = (): WordCard[] => {
       sentenceEn: 'We live in a big house.',
       sentenceCn: '我们住在一个大房子里。',
       imageUrl: 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
-      phonics: 'h-ouse'
+      phonics: splitPhonics('house')
     },
     {
       id: 'sample-8',
@@ -95,7 +81,7 @@ export const generateSampleWords = (): WordCard[] => {
       sentenceEn: 'Today is Monday.',
       sentenceCn: '今天是星期一。',
       imageUrl: 'https://images.pexels.com/photos/1020315/pexels-photo-1020315.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
-      phonics: 'Mon-day'
+      phonics: splitPhonics('Monday')
     }
   ];
 };

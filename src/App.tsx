@@ -3,6 +3,7 @@ import Header from './components/Header';
 import InputSection from './components/InputSection';
 import CardPreview from './components/CardPreview';
 import ExportSection from './components/ExportSection';
+import APIUsageDisplay from './components/APIUsageDisplay';
 import { WordCard } from './types';
 import { generateSampleWords } from './utils/sampleData';
 
@@ -20,11 +21,51 @@ function App() {
     setWords(sampleWords);
   };
 
+  // ========================================
+  // 🔧 调试模式控制配置
+  // ========================================
+  // 注意：以下代码块用于控制调试功能的显示
+  // ⚠️ 请勿删除或修改，除非明确需要禁用调试功能
+  
+  // 检查是否开启调试模式
+  const isDebugMode = import.meta.env.VITE_DEBUG_MODE === 'true';
+  
+  // 在开发环境中自动开启调试模式（兜底策略）
+  const isDevelopment = import.meta.env.DEV;
+  const showDebugControls = isDebugMode || isDevelopment;
+  
+  // 调试信息输出（仅在控制台，不影响用户界面）
+  if (isDevelopment) {
+    console.log('🔧 调试模式状态:', {
+      VITE_DEBUG_MODE: import.meta.env.VITE_DEBUG_MODE,
+      isDebugMode,
+      isDevelopment,
+      showDebugControls
+    });
+  }
+  // ========================================
+  // 🔧 调试模式控制配置结束
+  // ========================================
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* ======================================== */}
+        {/* 🔧 调试功能区域 - API使用统计 */}
+        {/* ⚠️ 删除此区域将移除API统计监控功能 */}
+        {/* ======================================== */}
+        <div className="mb-6">
+          <APIUsageDisplay 
+            className="w-full" 
+            showControls={showDebugControls}
+          />
+        </div>
+        {/* ======================================== */}
+        {/* 🔧 调试功能区域结束 */}
+        {/* ======================================== */}
+        
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* 左栏：输入区域 */}
           <div className="space-y-6">
@@ -37,7 +78,7 @@ function App() {
           
           {/* 右栏：预览和导出区域 */}
           <div className="space-y-6">
-            <CardPreview words={words} />
+            <CardPreview words={words} showDebugControls={showDebugControls} />
           </div>
         </div>
         

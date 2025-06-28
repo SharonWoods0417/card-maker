@@ -1,12 +1,12 @@
 export interface WordCard {
   id: string;
   word: string;
-  ipa: string;
+  ipa?: string;          // 与DictionaryEntry保持一致，可选
   meaningCn: string;
-  sentenceEn: string;
-  sentenceCn: string;
-  imageUrl: string;
-  phonics?: string[]; // 更新：从string改为string[]数组，支持音节分块
+  sentenceEn?: string;   // 与DictionaryEntry保持一致，可选
+  sentenceCn?: string;   // 与DictionaryEntry保持一致，可选
+  imageUrl?: string;     // 与DictionaryEntry保持一致，可选
+  phonics?: string[];    // 音节数组，可选
 }
 
 export interface CardGeneratorState {
@@ -19,11 +19,11 @@ export interface CardGeneratorState {
 // 新增：字典条目接口（与需求文档v1.8保持一致）
 export interface DictionaryEntry {
   word: string;
-  ipa: string;          // 国际音标
+  ipa?: string;         // 国际音标（可选，与WordCard保持一致）
   meaningCn: string;    // 中文释义
-  sentenceEn: string;   // 英文例句
-  sentenceCn: string;   // 中文翻译
-  phonics: string[];    // 音节数组
+  sentenceEn?: string;  // 英文例句（可选）
+  sentenceCn?: string;  // 中文翻译（可选）
+  phonics?: string[];   // 音节数组（可选）
   imageUrl?: string;    // 图片URL（可选）
   source: 'base' | 'ai' | 'user'; // 数据来源
 }

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Plus, Trash2, FileText, Sparkles } from 'lucide-react';
 import { WordCard } from '../types';
+import { getWordEntry, formatWordForStorage } from '../utils/dictionary';
 
 interface InputSectionProps {
   words: WordCard[];
@@ -16,167 +17,53 @@ const InputSection: React.FC<InputSectionProps> = ({ words, onWordsChange, onGen
     const file = event.target.files?.[0];
     if (file && file.type === 'text/csv') {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const text = e.target?.result as string;
         const lines = text.split('\n').filter(line => line.trim());
         const newWords: WordCard[] = [];
         
-        lines.forEach((line, index) => {
-          if (index === 0 && line.toLowerCase().includes('word')) return; // Skip header
+        for (let index = 0; index < lines.length; index++) {
+          const line = lines[index];
+          if (index === 0 && line.toLowerCase().includes('word')) continue; // Skip header
+          
           const [word, ipa, meaningCn, sentenceEn, sentenceCn, imageUrl] = line.split(',').map(s => s.trim());
-          if (word && ipa && meaningCn) {
-            newWords.push({
-              id: `csv-${index}`,
-              word: formatWordForStorage(word),
-              ipa,
-              meaningCn,
-              sentenceEn: sentenceEn || '',
-              sentenceCn: sentenceCn || '',
-              imageUrl: imageUrl || `https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg?auto=compress&cs=tinysrgb&w=300&h=200`,
-              phonics: generatePhonics(word)
-            });
+          if (word) {
+            const formattedWord = formatWordForStorage(word);
+            
+                         // 使用新的词典工具自动补全
+             const completedEntry = await getWordEntry(formattedWord);
+             
+             if (completedEntry) {
+               newWords.push({
+                 id: `csv-${index}`,
+                 word: completedEntry.word,
+                 ipa: completedEntry.ipa || ipa,
+                 meaningCn: completedEntry.meaningCn || meaningCn || formattedWord,
+                 sentenceEn: completedEntry.sentenceEn || sentenceEn,
+                 sentenceCn: completedEntry.sentenceCn || sentenceCn,
+                 imageUrl: completedEntry.imageUrl || imageUrl || `https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg?auto=compress&cs=tinysrgb&w=300&h=200`,
+                 phonics: completedEntry.phonics
+               });
+             } else {
+               // 降级方案：如果无法获取数据，使用CSV中的数据或默认值
+               newWords.push({
+                 id: `csv-${index}`,
+                 word: formattedWord,
+                 ipa: ipa || `/${formattedWord}/`,
+                 meaningCn: meaningCn || formattedWord,
+                 sentenceEn: sentenceEn || `This is ${formattedWord}.`,
+                 sentenceCn: sentenceCn || `这是 ${formattedWord}。`,
+                 imageUrl: imageUrl || generateImageUrl(formattedWord),
+                 phonics: [] // 如果无法获取，设为空数组
+               });
+             }
           }
-        });
+        }
         
         onWordsChange(newWords);
       };
       reader.readAsText(file);
     }
-  };
-
-  // 格式化单词存储（除专有名词外都用小写）
-  const formatWordForStorage = (word: string): string => {
-    const properNouns = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
-                        'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 
-                        'September', 'October', 'November', 'December', 'China', 'America', 'English'];
-    
-    const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    
-    if (properNouns.includes(capitalizedWord)) {
-      return capitalizedWord;
-    }
-    
-    return word.toLowerCase();
-  };
-
-  const generatePhonics = (word: string): string => {
-    // 简单的拼读分块逻辑，实际应用中可以更复杂
-    return word.split('').map((char, index) => 
-      index % 2 === 0 ? `<span class="text-red-500">${char}</span>` : `<span class="text-blue-500">${char}</span>`
-    ).join('');
-  };
-
-  // 生成默认的音标（简化版）
-  const generateIPA = (word: string): string => {
-    // 这里可以集成真实的音标生成逻辑，现在使用简化版
-    const ipaMap: { [key: string]: string } = {
-      'apple': '/ˈæpəl/',
-      'book': '/bʊk/',
-      'cat': '/kæt/',
-      'dog': '/dɔːɡ/',
-      'elephant': '/ˈeləfənt/',
-      'flower': '/ˈflaʊər/',
-      'house': '/haʊs/',
-      'sun': '/sʌn/',
-      'tree': '/triː/',
-      'water': '/ˈwɔːtər/',
-      'bird': '/bɜːrd/',
-      'fish': '/fɪʃ/',
-      'car': '/kɑːr/',
-      'ball': '/bɔːl/',
-      'pen': '/pen/',
-      'monday': '/ˈmʌndeɪ/',
-      'tuesday': '/ˈtuːzdeɪ/',
-      'wednesday': '/ˈwenzdeɪ/',
-      'thursday': '/ˈθɜːrzdeɪ/',
-      'friday': '/ˈfraɪdeɪ/',
-      'saturday': '/ˈsætərdeɪ/',
-      'sunday': '/ˈsʌndeɪ/',
-      'beautiful': '/ˈbjuːtɪfəl/',
-      'happy': '/ˈhæpi/',
-      'big': '/bɪɡ/',
-      'small': '/smɔːl/',
-      'good': '/ɡʊd/',
-      'bad': '/bæd/',
-      'run': '/rʌn/',
-      'walk': '/wɔːk/',
-      'eat': '/iːt/',
-      'drink': '/drɪŋk/',
-      'play': '/pleɪ/',
-      'study': '/ˈstʌdi/',
-    };
-    
-    return ipaMap[word.toLowerCase()] || `/${word}/`;
-  };
-
-  // 生成默认的中文释义（简化版）
-  const generateMeaning = (word: string): string => {
-    const meaningMap: { [key: string]: string } = {
-      'apple': '苹果',
-      'book': '书本',
-      'cat': '猫',
-      'dog': '狗',
-      'elephant': '大象',
-      'flower': '花朵',
-      'house': '房子',
-      'sun': '太阳',
-      'tree': '树',
-      'water': '水',
-      'bird': '鸟',
-      'fish': '鱼',
-      'car': '汽车',
-      'ball': '球',
-      'pen': '钢笔',
-      'monday': '星期一',
-      'tuesday': '星期二',
-      'wednesday': '星期三',
-      'thursday': '星期四',
-      'friday': '星期五',
-      'saturday': '星期六',
-      'sunday': '星期日',
-      'beautiful': '漂亮的',
-      'happy': '快乐的',
-      'big': '大的',
-      'small': '小的',
-      'good': '好的',
-      'bad': '坏的',
-      'run': '跑步',
-      'walk': '走路',
-      'eat': '吃',
-      'drink': '喝',
-      'play': '玩耍',
-      'study': '学习',
-    };
-    
-    return meaningMap[word.toLowerCase()] || word;
-  };
-
-  // 生成默认的例句
-  const generateSentence = (word: string): { en: string; cn: string } => {
-    const sentenceMap: { [key: string]: { en: string; cn: string } } = {
-      'apple': { en: 'I eat an apple every day.', cn: '我每天吃一个苹果。' },
-      'book': { en: 'This is a very interesting book.', cn: '这是一本非常有趣的书。' },
-      'cat': { en: 'The cat is sleeping on the sofa.', cn: '猫正在沙发上睡觉。' },
-      'dog': { en: 'My dog likes to play in the park.', cn: '我的狗喜欢在公园里玩耍。' },
-      'elephant': { en: 'The elephant is the largest land animal.', cn: '大象是最大的陆地动物。' },
-      'flower': { en: 'She gave me a beautiful flower.', cn: '她给了我一朵美丽的花。' },
-      'house': { en: 'We live in a big house.', cn: '我们住在一个大房子里。' },
-      'sun': { en: 'The sun is shining brightly today.', cn: '今天阳光明媚。' },
-      'monday': { en: 'Today is Monday.', cn: '今天是星期一。' },
-      'tuesday': { en: 'I have English class on Tuesday.', cn: '我星期二有英语课。' },
-      'beautiful': { en: 'She is a beautiful girl.', cn: '她是一个漂亮的女孩。' },
-      'happy': { en: 'I am very happy today.', cn: '我今天很快乐。' },
-      'big': { en: 'This is a big house.', cn: '这是一个大房子。' },
-      'small': { en: 'The mouse is very small.', cn: '老鼠很小。' },
-      'run': { en: 'I like to run in the morning.', cn: '我喜欢早上跑步。' },
-      'play': { en: 'Children love to play games.', cn: '孩子们喜欢玩游戏。' },
-    };
-    
-    const defaultSentence = sentenceMap[word.toLowerCase()];
-    return defaultSentence || { 
-      en: `This is a ${word}.`, 
-      cn: `这是一个${generateMeaning(word)}。` 
-    };
   };
 
   // 生成默认图片URL
@@ -218,24 +105,42 @@ const InputSection: React.FC<InputSectionProps> = ({ words, onWordsChange, onGen
     setManualWords(updated);
   };
 
-  const applyManualWords = () => {
-    const validWords = manualWords
-      .filter(w => w.trim())
-      .map((word, index) => {
-        const formattedWord = formatWordForStorage(word.trim());
-        const sentence = generateSentence(formattedWord);
-        
-        return {
-          id: `manual-${index}`,
-          word: formattedWord,
-          ipa: generateIPA(formattedWord),
-          meaningCn: generateMeaning(formattedWord),
-          sentenceEn: sentence.en,
-          sentenceCn: sentence.cn,
-          imageUrl: generateImageUrl(formattedWord),
-          phonics: generatePhonics(formattedWord)
-        };
-      });
+  const applyManualWords = async () => {
+    const validWords = await Promise.all(
+      manualWords
+        .filter(w => w.trim())
+        .map(async (word, index) => {
+          const formattedWord = formatWordForStorage(word.trim());
+          
+                     // 使用新的词典工具自动补全所有字段
+           const completedEntry = await getWordEntry(formattedWord);
+           
+           if (completedEntry) {
+             return {
+               id: `manual-${index}`,
+               word: completedEntry.word,
+               ipa: completedEntry.ipa,
+               meaningCn: completedEntry.meaningCn,
+               sentenceEn: completedEntry.sentenceEn,
+               sentenceCn: completedEntry.sentenceCn,
+               imageUrl: completedEntry.imageUrl || generateImageUrl(formattedWord),
+               phonics: completedEntry.phonics
+             };
+           } else {
+             // 降级方案：如果无法获取数据，返回基本信息
+             return {
+               id: `manual-${index}`,
+               word: formattedWord,
+               ipa: `/${formattedWord}/`,
+               meaningCn: formattedWord,
+               sentenceEn: `This is ${formattedWord}.`,
+               sentenceCn: `这是 ${formattedWord}。`,
+               imageUrl: generateImageUrl(formattedWord),
+               phonics: []
+             };
+           }
+        })
+    );
     
     onWordsChange(validWords);
   };
@@ -256,10 +161,10 @@ const InputSection: React.FC<InputSectionProps> = ({ words, onWordsChange, onGen
               点击上传或拖拽CSV文件到此处
             </p>
             <p className="text-sm text-gray-500">
-              格式：word, ipa, meaningCn, sentenceEn, sentenceCn, imageUrl
+              格式：word, ipa, meaningCn, sentenceEn, sentenceCn, imageUrl（除word外都可选）
             </p>
             <p className="text-xs text-blue-600 bg-blue-100 inline-block px-3 py-1 rounded-full">
-              支持Excel另存为CSV格式
+              支持Excel另存为CSV格式 | 自动补全缺失字段
             </p>
           </div>
           <input
@@ -307,10 +212,10 @@ const InputSection: React.FC<InputSectionProps> = ({ words, onWordsChange, onGen
           {/* 说明文字 */}
           <div className="bg-green-50 rounded-lg p-4 border border-green-200">
             <p className="text-green-800 text-sm font-medium mb-1">
-              💡 简化输入模式
+              💡 智能输入模式 - 基于Oxford Phonics规则
             </p>
             <p className="text-green-700 text-xs">
-              只需输入英文单词，系统将自动生成音标、中文释义（含词性标注）、例句和配图。单词将显示在专业的四线三格中，专有名词首字母大写，其他单词全小写。
+              只需输入英文单词，系统将自动生成音标、中文释义（含词性标注）、例句和配图。拼读拆分采用专业Oxford Phonics规则，适合小学生学习。
             </p>
           </div>
           
@@ -346,7 +251,7 @@ const InputSection: React.FC<InputSectionProps> = ({ words, onWordsChange, onGen
             onClick={applyManualWords}
             className="w-full bg-green-600 text-white px-6 py-4 rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg"
           >
-            生成单词卡片
+            智能生成单词卡片
           </button>
         </div>
       </div>

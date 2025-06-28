@@ -33,7 +33,7 @@ const ExportSection: React.FC<ExportSectionProps> = ({ words }) => {
       URL.revokeObjectURL(url);
       
       alert(`PDF导出成功！共生成${words.length}张双面卡片`);
-    } catch (error) {
+    } catch {
       alert('导出失败，请重试');
     } finally {
       setIsExporting(false);

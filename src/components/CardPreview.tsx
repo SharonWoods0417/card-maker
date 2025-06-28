@@ -1,35 +1,24 @@
 import React, { useState } from 'react';
 import { RotateCcw, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { WordCard } from '../types';
+import { formatWordForStorage } from '../utils/dictionary';
 
 interface CardPreviewProps {
   words: WordCard[];
+  showDebugControls?: boolean;
 }
 
-const CardPreview: React.FC<CardPreviewProps> = ({ words }) => {
+const CardPreview: React.FC<CardPreviewProps> = ({ words, showDebugControls = false }) => {
   const [showBack, setShowBack] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [flippingCard, setFlippingCard] = useState<string | null>(null);
-  const [debugMode, setDebugMode] = useState(true); // 开启调试模式
+  const [debugMode, setDebugMode] = useState(showDebugControls); // 根据环境变量控制调试模式
   
   const cardsPerPage = 4;
   const totalPages = Math.ceil(words.length / cardsPerPage);
   const currentCards = words.slice(currentPage * cardsPerPage, (currentPage + 1) * cardsPerPage);
 
-  // 格式化单词显示（除专有名词外都用小写）
-  const formatWord = (word: string): string => {
-    const properNouns = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
-                        'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 
-                        'September', 'October', 'November', 'December', 'China', 'America', 'English'];
-    
-    const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    
-    if (properNouns.includes(capitalizedWord)) {
-      return capitalizedWord;
-    }
-    
-    return word.toLowerCase();
-  };
+
 
   // 生成词性标注的完整释义
   const generateMeaningWithPartOfSpeech = (word: string, meaning: string): string => {
@@ -74,62 +63,13 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words }) => {
     return `${partOfSpeech} ${meaning}`;
   };
 
-  // 生成自然拼读色块 - 特定分割规则
-  const generatePhonicsBlocks = (word: string) => {
-    const formattedWord = formatWord(word);
-    let syllables: string[] = [];
-    
-    // 特定单词的分割规则
-    switch (formattedWord.toLowerCase()) {
-      case 'apple':
-        syllables = ['ap', 'ple'];
-        break;
-      case 'book':
-        syllables = ['b', 'oo', 'k'];
-        break;
-      case 'cat':
-        syllables = ['c', 'at'];
-        break;
-      case 'dog':
-        syllables = ['d', 'og'];
-        break;
-      case 'elephant':
-        syllables = ['el', 'e', 'phant'];
-        break;
-      case 'flower':
-        syllables = ['fl', 'ow', 'er'];
-        break;
-      case 'house':
-        syllables = ['h', 'ou', 'se'];
-        break;
-      case 'monday':
-        syllables = ['Mon', 'day'];
-        break;
-      default:
-        // 默认按音节分割
-        let currentSyllable = '';
-        for (let i = 0; i < formattedWord.length; i++) {
-          const char = formattedWord[i];
-          currentSyllable += char;
-          
-          const isVowel = 'aeiouAEIOU'.includes(char);
-          const nextChar = formattedWord[i + 1];
-          const isNextConsonant = nextChar && !'aeiouAEIOU'.includes(nextChar);
-          
-          if ((isVowel && isNextConsonant) || i === formattedWord.length - 1) {
-            syllables.push(currentSyllable);
-            currentSyllable = '';
-          }
-        }
-        
-        // 如果没有分割出音节，就按字母分割
-        if (syllables.length === 0) {
-          syllables = formattedWord.split('');
-        }
-        break;
+  // 渲染自然拼读色块 - 使用WordCard中的phonics数据
+  const renderPhonicsBlocks = (phonics: string[]) => {
+    if (!phonics || phonics.length === 0) {
+      return null;
     }
     
-    return syllables.map((syllable, index) => (
+    return phonics.map((syllable, index) => (
       <span key={index} className="phonics-block">
         {syllable}
       </span>
@@ -175,8 +115,9 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words }) => {
         </h2>
         
         <div className="flex items-center space-x-4">
-          {/* 调试模式开关 */}
-          <button
+          {/* 调试模式开关 - 只在开发环境显示 */}
+          {showDebugControls && (
+            <button
             onClick={() => setDebugMode(!debugMode)}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${
               debugMode 
@@ -186,6 +127,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words }) => {
           >
             {debugMode ? '关闭调试' : '开启调试'}
           </button>
+          )}
           
           {/* 正反面切换按钮 */}
           <div className="flex items-center bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl p-1 shadow-inner">
@@ -215,7 +157,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words }) => {
       
       {/* 卡片网格 */}
       <div className={`grid grid-cols-2 gap-6 mb-8 ${debugMode ? 'debug-mode' : ''}`}>
-        {currentCards.map((word, index) => (
+        {currentCards.map((word) => (
           <div
             key={word.id}
             className={`word-card aspect-[3/4] ${flippingCard === 'all' ? 'card-flip' : ''}`}
@@ -241,7 +183,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words }) => {
                   {/* 四线三格单词显示 */}
                   <div className="four-line-grid">
                     <div className="four-line-font four-line-font-md">
-                      {formatWord(word.word)}
+                      {formatWordForStorage(word.word)}
                     </div>
                   </div>
                   
@@ -252,7 +194,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words }) => {
                   
                   {/* 自然拼读彩色色块 */}
                   <div className="phonics-container">
-                    {generatePhonicsBlocks(word.word)}
+                    {renderPhonicsBlocks(word.phonics || [])}
                   </div>
                 </div>
               </div>

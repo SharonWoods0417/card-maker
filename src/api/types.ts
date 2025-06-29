@@ -4,7 +4,7 @@
 // OpenAI API 相关类型
 export interface OpenAIWordData {
   word: string;           // 单词本身
-  phonetic: string;       // 音标 (IPA格式)
+  phonetic: string;       // 音标 (IPA格式) - 注意：在转换为WordCard时映射到ipa字段
   meaning: string;        // 中文释义（适合小学生）
   example: string;        // 英文例句
   exampleTranslation: string; // 例句中文翻译

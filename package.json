@@ -1,7 +1,9 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "english-word-card-maker",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.2.0",
+  "description": "英语单词卡片生成器 - 基于Oxford Phonics v2.7规则的专业拼读教学工具",
+  "keywords": ["phonics", "english", "education", "oxford", "word-cards", "typescript", "react"],
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.3.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
@@ -26,7 +29,7 @@
     "globals": "^15.9.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.5.3",
+    "typescript": "^5.6.3",
     "typescript-eslint": "^8.3.0",
     "vite": "^5.4.2"
   }

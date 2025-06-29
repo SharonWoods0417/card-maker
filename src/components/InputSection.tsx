@@ -13,6 +13,45 @@ const InputSection: React.FC<InputSectionProps> = ({ words, onWordsChange, onGen
   const [manualWords, setManualWords] = useState<string[]>(['', '', '']);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 公共函数：创建WordCard条目
+  const createWordCard = async (word: string, index: number, idPrefix: string, csvData?: {
+    ipa?: string;
+    meaningCn?: string;
+    sentenceEn?: string;
+    sentenceCn?: string;
+    imageUrl?: string;
+  }): Promise<WordCard> => {
+    const formattedWord = formatWordForStorage(word);
+    
+    // 使用新的词典工具自动补全
+    const completedEntry = await getWordEntry(formattedWord);
+    
+    if (completedEntry) {
+      return {
+        id: `${idPrefix}-${index}`,
+        word: completedEntry.word,
+        ipa: completedEntry.ipa || csvData?.ipa,
+        meaningCn: completedEntry.meaningCn || csvData?.meaningCn || formattedWord,
+        sentenceEn: completedEntry.sentenceEn || csvData?.sentenceEn,
+        sentenceCn: completedEntry.sentenceCn || csvData?.sentenceCn,
+        imageUrl: completedEntry.imageUrl || csvData?.imageUrl || generateImageUrl(formattedWord),
+        phonics: completedEntry.phonics
+      };
+    } else {
+      // 降级方案：如果无法获取数据，使用提供的数据或默认值
+      return {
+        id: `${idPrefix}-${index}`,
+        word: formattedWord,
+        ipa: csvData?.ipa || `/${formattedWord}/`,
+        meaningCn: csvData?.meaningCn || formattedWord,
+        sentenceEn: csvData?.sentenceEn || `This is ${formattedWord}.`,
+        sentenceCn: csvData?.sentenceCn || `这是 ${formattedWord}。`,
+        imageUrl: csvData?.imageUrl || generateImageUrl(formattedWord),
+        phonics: [] // 如果无法获取，设为空数组
+      };
+    }
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'text/csv') {
@@ -28,35 +67,14 @@ const InputSection: React.FC<InputSectionProps> = ({ words, onWordsChange, onGen
           
           const [word, ipa, meaningCn, sentenceEn, sentenceCn, imageUrl] = line.split(',').map(s => s.trim());
           if (word) {
-            const formattedWord = formatWordForStorage(word);
-            
-                         // 使用新的词典工具自动补全
-             const completedEntry = await getWordEntry(formattedWord);
-             
-             if (completedEntry) {
-               newWords.push({
-                 id: `csv-${index}`,
-                 word: completedEntry.word,
-                 ipa: completedEntry.ipa || ipa,
-                 meaningCn: completedEntry.meaningCn || meaningCn || formattedWord,
-                 sentenceEn: completedEntry.sentenceEn || sentenceEn,
-                 sentenceCn: completedEntry.sentenceCn || sentenceCn,
-                 imageUrl: completedEntry.imageUrl || imageUrl || `https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg?auto=compress&cs=tinysrgb&w=300&h=200`,
-                 phonics: completedEntry.phonics
-               });
-             } else {
-               // 降级方案：如果无法获取数据，使用CSV中的数据或默认值
-               newWords.push({
-                 id: `csv-${index}`,
-                 word: formattedWord,
-                 ipa: ipa || `/${formattedWord}/`,
-                 meaningCn: meaningCn || formattedWord,
-                 sentenceEn: sentenceEn || `This is ${formattedWord}.`,
-                 sentenceCn: sentenceCn || `这是 ${formattedWord}。`,
-                 imageUrl: imageUrl || generateImageUrl(formattedWord),
-                 phonics: [] // 如果无法获取，设为空数组
-               });
-             }
+            const wordCard = await createWordCard(word, index, 'csv', {
+              ipa,
+              meaningCn,
+              sentenceEn,
+              sentenceCn,
+              imageUrl
+            });
+            newWords.push(wordCard);
           }
         }
         
@@ -109,37 +127,7 @@ const InputSection: React.FC<InputSectionProps> = ({ words, onWordsChange, onGen
     const validWords = await Promise.all(
       manualWords
         .filter(w => w.trim())
-        .map(async (word, index) => {
-          const formattedWord = formatWordForStorage(word.trim());
-          
-                     // 使用新的词典工具自动补全所有字段
-           const completedEntry = await getWordEntry(formattedWord);
-           
-           if (completedEntry) {
-             return {
-               id: `manual-${index}`,
-               word: completedEntry.word,
-               ipa: completedEntry.ipa,
-               meaningCn: completedEntry.meaningCn,
-               sentenceEn: completedEntry.sentenceEn,
-               sentenceCn: completedEntry.sentenceCn,
-               imageUrl: completedEntry.imageUrl || generateImageUrl(formattedWord),
-               phonics: completedEntry.phonics
-             };
-           } else {
-             // 降级方案：如果无法获取数据，返回基本信息
-             return {
-               id: `manual-${index}`,
-               word: formattedWord,
-               ipa: `/${formattedWord}/`,
-               meaningCn: formattedWord,
-               sentenceEn: `This is ${formattedWord}.`,
-               sentenceCn: `这是 ${formattedWord}。`,
-               imageUrl: generateImageUrl(formattedWord),
-               phonics: []
-             };
-           }
-        })
+        .map((word, index) => createWordCard(word.trim(), index, 'manual'))
     );
     
     onWordsChange(validWords);

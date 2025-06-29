@@ -22,44 +22,32 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words, showDebugControls = fa
 
   // 生成词性标注的完整释义
   const generateMeaningWithPartOfSpeech = (word: string, meaning: string): string => {
-    const partOfSpeechMap: { [key: string]: string } = {
-      'apple': 'n.',
-      'book': 'n.',
-      'cat': 'n.',
-      'dog': 'n.',
-      'elephant': 'n.',
-      'flower': 'n.',
-      'house': 'n.',
-      'sun': 'n.',
-      'tree': 'n.',
-      'water': 'n.',
-      'bird': 'n.',
-      'fish': 'n.',
-      'car': 'n.',
-      'ball': 'n.',
-      'pen': 'n.',
-      'monday': 'n.',
-      'tuesday': 'n.',
-      'wednesday': 'n.',
-      'thursday': 'n.',
-      'friday': 'n.',
-      'saturday': 'n.',
-      'sunday': 'n.',
-      'beautiful': 'adj.',
-      'happy': 'adj.',
-      'big': 'adj.',
-      'small': 'adj.',
-      'good': 'adj.',
-      'bad': 'adj.',
-      'run': 'v.',
-      'walk': 'v.',
-      'eat': 'v.',
-      'drink': 'v.',
-      'play': 'v.',
-      'study': 'v.',
+    // 如果释义已经包含词性标注，直接返回
+    if (/^(n\.|adj\.|v\.|adv\.|prep\.|conj\.|pron\.|art\.|interj\.)\s/.test(meaning)) {
+      return meaning;
+    }
+    
+    // 基于单词特征的智能词性推断
+    const inferPartOfSpeech = (word: string): string => {
+      const lowerWord = word.toLowerCase();
+      
+      // 动词特征
+      if (lowerWord.endsWith('ing') && lowerWord.length > 4) return 'v.';
+      if (lowerWord.endsWith('ed') && lowerWord.length > 3) return 'v.';
+      if (['run', 'walk', 'eat', 'drink', 'play', 'study', 'read', 'write', 'sing', 'dance'].includes(lowerWord)) return 'v.';
+      
+      // 形容词特征
+      if (lowerWord.endsWith('ful') || lowerWord.endsWith('less') || lowerWord.endsWith('ous')) return 'adj.';
+      if (['beautiful', 'happy', 'big', 'small', 'good', 'bad', 'nice', 'kind', 'smart'].includes(lowerWord)) return 'adj.';
+      
+      // 副词特征
+      if (lowerWord.endsWith('ly') && lowerWord.length > 3) return 'adv.';
+      
+      // 默认为名词
+      return 'n.';
     };
     
-    const partOfSpeech = partOfSpeechMap[word.toLowerCase()] || 'n.';
+    const partOfSpeech = inferPartOfSpeech(word);
     return `${partOfSpeech} ${meaning}`;
   };
 
@@ -160,7 +148,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words, showDebugControls = fa
         {currentCards.map((word) => (
           <div
             key={word.id}
-            className={`word-card aspect-[3/4] ${flippingCard === 'all' ? 'card-flip' : ''}`}
+            className={`word-card aspect-[85/135] ${flippingCard === 'all' ? 'card-flip' : ''}`}
           >
             {!showBack ? (
               // 正面：图片50% + 文字区域50%，上边距0px
@@ -243,7 +231,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words, showDebugControls = fa
         {currentCards.length < 4 && Array.from({ length: 4 - currentCards.length }).map((_, index) => (
           <div
             key={`empty-${index}`}
-            className="empty-card aspect-[3/4]"
+            className="empty-card aspect-[85/135]"
           >
             <div className="text-center">
               <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-2 flex items-center justify-center">

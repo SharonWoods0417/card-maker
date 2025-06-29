@@ -1,6 +1,15 @@
 /* 导入专业字体 - 必须放在最前面 */
 @import url("https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Nunito:wght@400;600;700;800&family=Comic+Neue:wght@400;700&display=swap");
 
+/* AU School Handwriting Fonts - 澳洲学校标准手写体 */
+@font-face {
+  font-family: "AU School Handwriting Fonts";
+  src: url("/fonts/AU-School-Handwriting-Fonts.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -34,6 +43,7 @@
 
 /* 四线三格背景样式 - 超清晰版本 */
 .four-line-grid {
+  margin-top: 0px; /* 还原为紧贴顶部 */
   position: relative;
   background: linear-gradient(
     to bottom,
@@ -93,7 +103,7 @@
 
   background-repeat: repeat-x;
   padding: 12px 16px;
-  min-height: 70px;
+  min-height: 85px; /* 调高容器，避免文字顶破虚线 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,11 +114,12 @@
   background-color: transparent;
 }
 
-/* 四线三格字体样式 - 专业手写体 */
+/* 四线三格字体样式 - 澳洲学校标准手写体优先 */
 .four-line-font {
-  font-family: "Kalam", "Comic Neue", "Comic Sans MS", cursive;
+  font-family: "AU School Handwriting Fonts", "Kalam", "Comic Neue", "Comic Sans MS", "Apple Chancery", "Bradley Hand", "Lucida Handwriting", cursive;
   font-weight: 700;
-  line-height: 0.9;
+  line-height: 1; /* 调高行高，便于基线更贴近红线 */
+  transform: translateY(-19%); /* 微调为 19%，最终肉眼验证贴红线 */
   letter-spacing: 0.05em;
   text-align: center;
   color: #1f2937;
@@ -123,7 +134,7 @@
 }
 
 .four-line-font-md {
-  font-size: 2rem; /* 32px */
+  font-size: 2.5rem; /* 40px，进一步放大 */
 }
 
 .four-line-font-lg {
@@ -201,15 +212,15 @@
   transform: scale(1.05);
 }
 
-/* 音标样式 - 上边距0px，下边距6px */
+/* 音标样式 - 上边距0px，下边距15px，字号20px */
 .phonetic-text {
   font-family: "Nunito", sans-serif;
   font-weight: 600;
   color: #3b82f6;
-  font-size: 0.9rem;
+  font-size: 1.25rem;
   display: inline-block;
   margin-top: 0px;
-  margin-bottom: 6px;
+  margin-bottom: 15px;
 }
 
 /* 自然拼读彩色色块样式 - 20%透明度 */
@@ -227,7 +238,7 @@
   border-radius: 8px;
   font-family: "Kalam", cursive;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 1.25rem;
   color: white;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   min-width: 28px;
@@ -339,7 +350,7 @@
 .sentence-english {
   font-weight: 600;
   color: #374151;
-  font-size: 0.9rem;
+  font-size: 16px; /* 桌面端16px */
   display: inline-block;
   width: calc(100% - 20px); /* 减去序号的宽度 */
   vertical-align: top;
@@ -350,7 +361,7 @@
 .sentence-chinese {
   font-weight: 600;
   color: #6b7280;
-  font-size: 0.85rem;
+  font-size: 15px; /* 桌面端15px */
   margin-left: 21px; /* 从24px改为21px */
   margin-top: 2px; /* 从4px改为2px */
   line-height: 1.5;
@@ -410,11 +421,10 @@
 /* 文字区域样式 - 50%高度，上边距0px */
 .card-text-area {
   height: 50%;
-  padding: 0px 16px 16px 16px;
+  padding: 4px 20px 20px 20px; /* 顶部留 4px */
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-start; /* 从顶部开始排列 */
   text-align: center;
 }
 
@@ -438,11 +448,11 @@
   }
 
   .sentence-english {
-    font-size: 0.8rem;
+    font-size: 14px; /* 移动端14px */
   }
 
   .sentence-chinese {
-    font-size: 0.75rem;
+    font-size: 13.5px; /* 移动端13.5px */
   }
 
   .phonics-block {
@@ -459,13 +469,13 @@
   }
 
   .card-text-area {
-    padding: 0px 12px 12px 12px;
+    padding: 4px 12px 12px 12px; /* 移动端同样保留 4px 顶距 */
   }
 
   .phonetic-text {
-    font-size: 0.8rem;
+    font-size: 0.92rem;
     margin-top: 0px;
-    margin-bottom: 4px;
+    margin-bottom: 0px;
   }
 
   /* 移动端背面顶部内边距调整为16px */

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音标图片截图测试</title>
+    <style>
+        @font-face {
+            font-family: "Doulos SIL";
+            src: url("/fonts/DoulosSIL-Regular.ttf") format("truetype");
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        
+        .phonetic-text {
+            font-family: "Doulos SIL", "Times", serif;
+            font-weight: normal;
+            color: #3b82f6;
+            font-size: 18px;
+            display: inline-block;
+            background-color: #ffffff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+            margin: 10px;
+        }
+        
+        .result {
+            margin: 20px 0;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .result img {
+            max-width: 200px;
+            border: 1px solid #ccc;
+        }
+        
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        
+        button:hover {
+            background: #2563eb;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>音标图片截图测试</h1>
+        
+        <h2>测试音标渲染：</h2>
+        <div id="ipa-test-1" class="phonetic-text">/ˈæpl/</div>
+        <div id="ipa-test-2" class="phonetic-text">/ˈbænənə/</div>
+        <div id="ipa-test-3" class="phonetic-text">/ˈkærət/</div>
+        <div id="ipa-test-4" class="phonetic-text">/ˈelɪfənt/</div>
+        
+        <button onclick="captureTest()">🔄 开始截图测试</button>
+        <button onclick="clearResults()">🗑️ 清空结果</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        async function captureIpaImage(element) {
+            try {
+                const canvas = await html2canvas(element, {
+                    backgroundColor: '#ffffff',
+                    scale: 3,
+                    useCORS: true,
+                    allowTaint: false,
+                    logging: false,
+                    width: element.offsetWidth,
+                    height: element.offsetHeight,
+                });
+                
+                return canvas.toDataURL('image/png');
+            } catch (error) {
+                console.error('音标截图失败:', error);
+                return '';
+            }
+        }
+        
+        async function captureTest() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h3>正在截图...</h3>';
+            
+            const testIds = ['ipa-test-1', 'ipa-test-2', 'ipa-test-3', 'ipa-test-4'];
+            const results = [];
+            
+            for (const id of testIds) {
+                const element = document.getElementById(id);
+                if (element) {
+                    const textContent = element.textContent;
+                    const imageData = await captureIpaImage(element);
+                    results.push({ id, textContent, imageData });
+                }
+            }
+            
+            displayResults(results);
+        }
+        
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h3>截图结果：</h3>';
+            
+            results.forEach((result, index) => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = `
+                    <h4>测试 ${index + 1}: ${result.textContent}</h4>
+                    <p><strong>元素ID:</strong> ${result.id}</p>
+                    <p><strong>图片数据长度:</strong> ${result.imageData.length} 字符</p>
+                    ${result.imageData ? `<img src="${result.imageData}" alt="音标图片">` : '<p>❌ 截图失败</p>'}
+                `;
+                resultsDiv.appendChild(resultDiv);
+            });
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // 页面加载完成后检查字体
+        window.addEventListener('load', () => {
+            console.log('页面加载完成，检查字体状态...');
+            setTimeout(() => {
+                console.log('字体应该已经加载完成');
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 

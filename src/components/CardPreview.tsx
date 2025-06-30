@@ -148,7 +148,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words, showDebugControls = fa
         {currentCards.map((word) => (
           <div
             key={word.id}
-            className={`word-card aspect-[85/135] ${flippingCard === 'all' ? 'card-flip' : ''}`}
+            className={`word-card aspect-[85/120] ${flippingCard === 'all' ? 'card-flip' : ''}`}
           >
             {!showBack ? (
               // 正面：图片50% + 文字区域50%，上边距0px
@@ -175,8 +175,20 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words, showDebugControls = fa
                     </div>
                   </div>
                   
-                  {/* 音标 */}
-                  <div className="phonetic-text">
+                  {/* 音标 - 添加唯一ID用于截图 */}
+                  <div 
+                    id={`ipa-${word.id}`}
+                    className="phonetic-text"
+                    style={{
+                      fontFamily: 'Doulos SIL, Times, serif',
+                      fontSize: '18px',
+                      color: '#3b82f6',
+                      backgroundColor: '#ffffff',
+                      display: 'inline-block',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                    }}
+                  >
                     {word.ipa}
                   </div>
                   
@@ -231,7 +243,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({ words, showDebugControls = fa
         {currentCards.length < 4 && Array.from({ length: 4 - currentCards.length }).map((_, index) => (
           <div
             key={`empty-${index}`}
-            className="empty-card aspect-[85/135]"
+            className="empty-card aspect-[85/120]"
           >
             <div className="text-center">
               <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-2 flex items-center justify-center">

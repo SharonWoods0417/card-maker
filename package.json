@@ -3,7 +3,15 @@
   "private": true,
   "version": "1.2.0",
   "description": "英语单词卡片生成器 - 基于Oxford Phonics v2.7规则的专业拼读教学工具",
-  "keywords": ["phonics", "english", "education", "oxford", "word-cards", "typescript", "react"],
+  "keywords": [
+    "phonics",
+    "english",
+    "education",
+    "oxford",
+    "word-cards",
+    "typescript",
+    "react"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +21,8 @@
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.3.0",
+    "buffer": "^6.0.3",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

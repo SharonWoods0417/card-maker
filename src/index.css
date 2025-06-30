@@ -175,14 +175,16 @@
   border-color: #cbd5e1;
 }
 
-/* 图片容器样式 - 50%高度 */
+/* 图片容器样式 - 50%高度，移除圆角确保与红框贴合 */
 .card-image-container {
   height: 50%;
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  border-radius: 12px 12px 0 0;
+  border-radius: 0; /* 移除圆角，确保与卡片红框完全贴合 */
   overflow: hidden;
   position: relative;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  margin: 0; /* 确保没有外边距 */
+  padding: 0; /* 确保没有内边距 */
 }
 
 .card-image-container::after {
@@ -212,15 +214,26 @@
   transform: scale(1.05);
 }
 
-/* 音标样式 - 上边距0px，下边距15px，字号20px */
+/* 音标样式 - 使用Doulos SIL字体，确保音标正确显示 */
+@font-face {
+  font-family: "Doulos SIL";
+  src: url("/fonts/DoulosSIL-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 .phonetic-text {
-  font-family: "Nunito", sans-serif;
-  font-weight: 600;
+  font-family: "Doulos SIL", "Times", serif;
+  font-weight: normal;
   color: #3b82f6;
-  font-size: 1.25rem;
+  font-size: 1.125rem; /* 18px */
   display: inline-block;
   margin-top: 0px;
   margin-bottom: 15px;
+  background-color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 /* 自然拼读彩色色块样式 - 20%透明度 */
@@ -524,4 +537,10 @@
   height: 2px;
   background: linear-gradient(90deg, #3b82f6, #8b5cf6);
   border-radius: 1px;
+}
+
+/* 特定宽高比的卡片样式 */
+.word-card.aspect-[85/120],
+.empty-card.aspect-[85/120] {
+  aspect-ratio: 85 / 120;
 }

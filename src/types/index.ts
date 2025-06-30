@@ -7,6 +7,7 @@ export interface WordCard {
   sentenceCn?: string;   // 与DictionaryEntry保持一致，可选
   imageUrl?: string;     // 与DictionaryEntry保持一致，可选
   phonics?: string[];    // 音节数组，可选
+  ipaImage?: string;     // 音标截图base64，用于PDF显示
 }
 
 export interface CardGeneratorState {

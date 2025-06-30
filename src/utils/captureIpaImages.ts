@@ -63,6 +63,7 @@ export async function generateAllIpaImages(wordCards: WordCard[]): Promise<WordC
         
         if (ipaImage) {
           console.log(`✅ 音标图片生成成功: ${card.word} (${index + 1}/${wordCards.length})`);
+          console.log(`    🖼️ ${card.word} 的音标图片地址:`, ipaImage);
           return { ...card, ipaImage };
         } else {
           console.warn(`❌ 音标图片生成失败: ${card.word}`);

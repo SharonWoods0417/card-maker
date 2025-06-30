@@ -5,8 +5,6 @@ import { WordCard } from '../types';
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 // 引入音标图片生成工具
 import { generateAllIpaImages } from '../utils/captureIpaImages';
-// 引入字体样式类型
-import type { FontStyle, FontWeight } from '@react-pdf/types';
 
 interface ExportSectionProps {
   words: WordCard[];
@@ -31,7 +29,7 @@ const initializeFonts = async (): Promise<void> => {
   console.log('🔄 开始注册PDF字体...');
   let hasError = false;
 
-  const registerFont = (config: { family: string; src: string; fontWeight?: FontWeight; fontStyle?: FontStyle; }, familyKey: keyof typeof fontFamilies) => {
+  const registerFont = (config: { family: string; src: string; }, familyKey: keyof typeof fontFamilies) => {
     try {
       Font.register(config);
       fontFamilies[familyKey] = config.family;
@@ -46,7 +44,6 @@ const initializeFonts = async (): Promise<void> => {
   registerFont({
     family: 'AU School Handwriting Fonts',
     src: '/fonts/AU-School-Handwriting-Fonts.ttf',
-    fontWeight: 'bold',
   }, 'handwriting');
 
   registerFont({ family: 'Doulos SIL', src: '/fonts/DoulosSIL-Regular.ttf' }, 'ipa');
@@ -172,17 +169,21 @@ const SmartPDFDownloadLink: React.FC<{ words: WordCard[] }> = ({ words }) => {
     init();
   }, []);
 
-  // 同步words变化，使用浅比较避免不必要更新
+  // 🔧 彻底修复无限循环：使用稳定的依赖项
+  const wordsStableKey = React.useMemo(() => {
+    return words.map(w => `${w.word}_${w.ipa}_${w.ipaImage ? 'img' : 'txt'}`).join('|');
+  }, [words]);
+  
+  // 同步words变化，使用稳定的依赖项避免无限循环
   React.useEffect(() => {
     setWordsWithImages(prevWords => {
-      // 如果数组长度或内容没有实际变化，保持原引用
-      if (prevWords.length === words.length && 
-          words.every((word, index) => prevWords[index] === word)) {
-        return prevWords;
+      const prevWordsKey = prevWords.map(w => `${w.word}_${w.ipa}_${w.ipaImage ? 'img' : 'txt'}`).join('|');
+      if (prevWordsKey === wordsStableKey) {
+        return prevWords; // 没有实际变化，保持引用
       }
-      return words;
+      return [...words]; // 创建新数组避免引用问题
     });
-  }, [words]);
+  }, [wordsStableKey, words]);
   
   // 🔧 修复无限重新渲染：使用useMemo缓存PDF文档和文件名
   const pdfDocument = React.useMemo(() => {
@@ -200,23 +201,21 @@ const SmartPDFDownloadLink: React.FC<{ words: WordCard[] }> = ({ words }) => {
     return { generatedCount, hasAnyImages };
   }, [wordsWithImages]);
 
-  // 生成音标图片的处理函数
-  const handleGenerateIpaImages = async () => {
+  // 生成音标图片的处理函数 - 使用稳定的依赖项
+  const handleGenerateIpaImages = React.useCallback(async () => {
     setIsGeneratingImages(true);
     try {
       console.log('🔄 开始生成音标图片...');
-      // 等待页面渲染稳定
       await new Promise(resolve => setTimeout(resolve, 500));
       const wordsWithIpaImages = await generateAllIpaImages(words);
       setWordsWithImages(wordsWithIpaImages);
       console.log('✅ 音标图片生成完成');
     } catch (error) {
       console.error('❌ 音标图片生成失败:', error);
-      setWordsWithImages(words); // 降级到原始数据
     } finally {
       setIsGeneratingImages(false);
     }
-  };
+  }, [words.length, wordsStableKey]); // 使用稳定的依赖项
 
   if (!isReady) {
     return (
@@ -282,8 +281,15 @@ const SmartPDFDownloadLink: React.FC<{ words: WordCard[] }> = ({ words }) => {
   );
 };
 
-// 调试模式开关
-const DEBUG = false;
+// 调试模式开关 - 用于查看PDF布局边框，排版完成前请保持开启
+const DEBUG = true;
+
+// TODO: 防止无限循环的关键点说明
+// 无限循环的根本原因：
+// 1. handleGenerateIpaImages依赖words数组
+// 2. words数组可能在组件外部频繁变化
+// 3. 需要确保所有useCallback和useMemo的依赖项稳定
+// 解决方案：使用更稳定的依赖项，避免引用变化
 
 // PDF样式定义 - 使用稳定的字体系统
 const pdfStyles = StyleSheet.create({
@@ -413,23 +419,33 @@ const pdfStyles = StyleSheet.create({
     zIndex: 2,
     transform: 'translateY(-19%)',        // 保持网页版的垂直偏移
   },
+  ipaContainer: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: '4mm',
+    border: DEBUG ? '1pt dashed #ff5722' : undefined,
+  },
+  ipaWrapper: {
+    fontSize: 0,
+    textAlign: 'center',
+    width: '100%',
+    border: DEBUG ? '1pt dashed #00ff00' : undefined, // 绿色边框便于调试
+  },
   ipa: {
     fontSize: 18,
     fontFamily: fontFamilies.ipa,
     fontWeight: 'normal',
     color: '#3b82f6',
-    marginBottom: '4mm',
     textAlign: 'center',
-    alignSelf: 'center',    // 添加自身居中对齐
-    border: DEBUG ? '1pt dashed #8e24aa' : undefined,
   },
   ipaImage: {
-    width: '60mm',
+    width: 'auto',
     height: '8mm',
     objectFit: 'contain',
-    marginBottom: '4mm',
-    alignSelf: 'center',
-    border: DEBUG ? '1pt dashed #8e24aa' : undefined,
+    border: DEBUG ? '0.5pt dashed red' : undefined, // 红色边框调试图片本身
   },
   phonicsContainer: {
     flexDirection: 'row',
@@ -481,17 +497,25 @@ const pdfStyles = StyleSheet.create({
     backgroundColor: '#F3F4F6', // bg-gray-100
     borderRadius: 6,
     width: '100%',
+    alignSelf: 'center',        // 容器自身居中
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',       // 容器内容居中
   },
   sentenceEnglish: {
     fontSize: 10,
     color: '#374151', // text-gray-700
     marginBottom: 2,
     fontFamily: fontFamilies.bold,
+    textAlign: 'center',        // 英文例句文本居中
+    width: '100%',              // 占满容器宽度
   },
   sentenceChinese: {
     fontSize: 9,
     color: '#4B5563', // text-gray-600
     fontFamily: fontFamilies.chinese,
+    textAlign: 'center',        // 中文例句文本居中
+    width: '100%',              // 占满容器宽度
   },
   meaningText: {
     fontSize: 14,
@@ -547,12 +571,14 @@ const WordCardsPDFDocument: React.FC<{ words: WordCard[] }> = React.memo(({ word
                             {word.word && <Text style={pdfStyles.word}>{word.word}</Text>}
                           </View>
                           
-                          {/* 音标：优先使用图片，降级到文本 */}
-                          {word.ipaImage ? (
-                            <Image src={word.ipaImage} style={pdfStyles.ipaImage} />
-                          ) : word.ipa && word.ipa.trim() !== '' ? (
-                            <Text style={pdfStyles.ipa}>{word.ipa}</Text>
-                          ) : null}
+                          {/* 音标：优先使用图片，降级到文本 - 使用直接的View容器居中 */}
+                          <View style={pdfStyles.ipaContainer}>
+                            {word.ipaImage ? (
+                              <Image src={word.ipaImage} style={pdfStyles.ipaImage} />
+                            ) : word.ipa && word.ipa.trim() !== '' ? (
+                              <Text style={pdfStyles.ipa}>{word.ipa}</Text>
+                            ) : null}
+                          </View>
                           
                           {/* 自然拼读 */}
                           {word.phonics && word.phonics.length > 0 && (

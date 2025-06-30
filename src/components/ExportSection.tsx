@@ -17,7 +17,8 @@ const fontFamilies = {
   handwriting: 'Helvetica-Bold', // 默认降级字体
   ipa: 'Times-Roman',           // 默认降级字体
   regular: 'Helvetica',         // 默认降级字体
-  bold: 'Helvetica-Bold'        // 默认降级字体
+  bold: 'Helvetica-Bold',       // 默认降级字体
+  chinese: 'Helvetica'          // 中文字体，默认降级
 };
 
 // 检查字体文件是否可用
@@ -87,6 +88,19 @@ const initializeFonts = async (): Promise<void> => {
       }
     } else {
       console.warn('❌ IPA字体文件不可用，使用降级字体');
+    }
+
+    // 尝试注册中文字体 - 使用Nunito作为中文字体（已验证支持中文）
+    const chineseAvailable = await checkFontAvailable('/fonts/Nunito-Bold.ttf');
+    if (chineseAvailable) {
+      const success = await safeRegisterFont('Nunito Chinese', '/fonts/Nunito-Bold.ttf');
+      if (success) {
+        fontFamilies.chinese = 'Nunito Chinese';
+        console.log('✅ 中文字体注册成功');
+      }
+    } else {
+      console.warn('❌ 中文字体文件不可用，使用降级字体');
+      fontFamilies.chinese = fontFamilies.regular;
     }
 
     // 尝试注册常规字体
@@ -361,7 +375,7 @@ const pdfStyles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: '60mm',
+    height: '50%',  // 改为50%，与网页版一致
     backgroundColor: '#f1f5f9',
     borderRadius: undefined,
     border: DEBUG ? '1pt dashed #1976d2' : undefined,
@@ -379,7 +393,7 @@ const pdfStyles = StyleSheet.create({
   },
   textContainer: {
     height: '50%',
-    padding: '1mm 5mm 5mm 5mm',
+    padding: '1mm 5mm 5mm 5mm',  // 调整内边距，顶部1mm
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'flex-start',
@@ -388,10 +402,11 @@ const pdfStyles = StyleSheet.create({
   },
   fourLineGrid: {
     position: 'relative',
-    width: '85%',
+    width: '85%',           // 与网页版一致
     height: '22mm',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: '1mm',    // 添加下边距
   },
   fourLineBackground: {
     position: 'absolute',
@@ -433,7 +448,7 @@ const pdfStyles = StyleSheet.create({
     backgroundColor: '#9ca3af',
   },
   word: {
-    fontSize: 30,
+    fontSize: 36,                         // 增大字体，接近网页版2.5rem(40px)
     fontWeight: 'bold',
     fontFamily: fontFamilies.handwriting,
     color: '#1f2937',
@@ -441,7 +456,7 @@ const pdfStyles = StyleSheet.create({
     border: DEBUG ? '1pt dashed #ffb300' : undefined,
     position: 'relative',
     zIndex: 2,
-    transform: 'translateY(-19%)',
+    transform: 'translateY(-19%)',        // 保持网页版的垂直偏移
   },
   ipa: {
     fontSize: 18,
@@ -474,8 +489,8 @@ const pdfStyles = StyleSheet.create({
     borderRadius: '2mm',
     paddingHorizontal: '2.5mm',
     paddingVertical: '1.5mm',
-    fontSize: 15,
-    fontFamily: fontFamilies.bold,
+    fontSize: 14,                        // 调整字体大小
+    fontFamily: fontFamilies.bold,       // 使用粗体字体
     fontWeight: 'bold',
     minWidth: '7mm',
     textAlign: 'center',
@@ -484,18 +499,18 @@ const pdfStyles = StyleSheet.create({
   // 背面样式
   backTextContainer: {
     height: '100%',
-    padding: '5mm',
+    padding: '5mm 5mm 5mm 5mm',         // 顶部5mm，与网页版20px相近
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',       // 改为顶部对齐，与网页版一致
     alignItems: 'center',
     textAlign: 'center',
-    gap: '8mm',
+    gap: '4mm',                        // 减小间距
     border: DEBUG ? '1pt dashed #43a047' : undefined,
   },
   meaning: {
     fontSize: 24,
-    fontFamily: fontFamilies.bold,
+    fontFamily: fontFamilies.chinese,      // 使用中文字体
     fontWeight: 'bold',
     color: '#1e293b',
     textAlign: 'center',
@@ -517,8 +532,18 @@ const pdfStyles = StyleSheet.create({
     fontWeight: 'normal',
     color: '#374151',
     lineHeight: 1.5,
-    textAlign: 'center',
+    textAlign: 'left',                     // 改为左对齐
     border: DEBUG ? '1pt dashed #3949ab' : undefined,
+  },
+  sentenceChinese: {
+    fontSize: 14,
+    fontFamily: fontFamilies.chinese,      // 使用中文字体
+    fontWeight: 'normal',
+    color: '#6b7280',
+    lineHeight: 1.5,
+    textAlign: 'left',
+    marginTop: '2mm',
+    border: DEBUG ? '1pt dashed #9c27b0' : undefined,
   },
 });
 
@@ -622,6 +647,10 @@ const WordCardsPDFDocument: React.FC<{ words: WordCard[] }> = ({ words }) => {
                           {word.sentenceEn && word.sentenceEn.trim() !== '' && (
                             <View style={pdfStyles.sentenceContainer}>
                               <Text style={pdfStyles.sentence}>{word.sentenceEn}</Text>
+                              {/* 中文例句翻译 */}
+                              {word.sentenceCn && word.sentenceCn.trim() !== '' && (
+                                <Text style={pdfStyles.sentenceChinese}>{word.sentenceCn}</Text>
+                              )}
                             </View>
                           )}
                         </View>

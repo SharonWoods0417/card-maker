@@ -5,6 +5,8 @@ import { WordCard } from '../types';
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 // 引入音标图片生成工具
 import { generateAllIpaImages } from '../utils/captureIpaImages';
+// 引入字体样式类型
+import type { FontStyle, FontWeight } from '@react-pdf/types';
 
 interface ExportSectionProps {
   words: WordCard[];
@@ -14,127 +16,54 @@ interface ExportSectionProps {
 let fontsRegistered = false;
 let fontsInitializing = false; // 防止并发初始化
 const fontFamilies = {
-  handwriting: 'Helvetica-Bold', // 默认降级字体
-  ipa: 'Times-Roman',           // 默认降级字体
-  regular: 'Helvetica',         // 默认降级字体
-  bold: 'Helvetica-Bold',       // 默认降级字体
-  chinese: 'Helvetica'          // 中文字体，默认降级
+  handwriting: 'AU School Handwriting Fonts', // 更新默认值
+  ipa: 'Doulos SIL',                          // 更新默认值  
+  regular: 'Charis SIL Regular',              // 更新默认值
+  bold: 'Charis SIL Bold',                    // 更新默认值
+  chinese: 'Source Han Sans CN'               // 更新默认值
 };
 
-// 检查字体文件是否可用
-const checkFontAvailable = async (src: string): Promise<boolean> => {
-  try {
-    const response = await fetch(src, { method: 'HEAD' });
-    return response.ok;
-  } catch {
-    return false;
-  }
-};
-
-// 安全注册字体的函数
-const safeRegisterFont = async (family: string, src: string): Promise<boolean> => {
-  try {
-    // 检查字体是否已经注册
-    const testDoc = document.createElement('span');
-    testDoc.style.fontFamily = family;
-    testDoc.style.position = 'absolute';
-    testDoc.style.left = '-9999px';
-    testDoc.textContent = 'test';
-    document.body.appendChild(testDoc);
-    
-    // 清理测试元素
-    document.body.removeChild(testDoc);
-    
-    // 注册字体
-    Font.register({
-      family: family,
-      src: src,
-    });
-    
-    return true;
-  } catch (error) {
-    console.warn(`字体注册失败 ${family}:`, error);
-    return false;
-  }
-};
-
-// 尝试注册字体，失败时使用降级字体
+// 安全地注册字体，失败时使用降级字体
 const initializeFonts = async (): Promise<void> => {
   if (fontsRegistered || fontsInitializing) return;
   
   fontsInitializing = true;
   console.log('🔄 开始注册PDF字体...');
+  let hasError = false;
 
-  try {
-    // 尝试注册手写体字体
-    const handwritingAvailable = await checkFontAvailable('/fonts/AU-School-Handwriting-Fonts.ttf');
-    if (handwritingAvailable) {
-      const success = await safeRegisterFont('AU School Handwriting Fonts', '/fonts/AU-School-Handwriting-Fonts.ttf');
-      if (success) {
-        fontFamilies.handwriting = 'AU School Handwriting Fonts';
-        console.log('✅ 手写体字体注册成功');
-      }
-    } else {
-      console.warn('❌ 手写体字体文件不可用，使用降级字体');
+  const registerFont = (config: { family: string; src: string; fontWeight?: FontWeight; fontStyle?: FontStyle; }, familyKey: keyof typeof fontFamilies) => {
+    try {
+      Font.register(config);
+      fontFamilies[familyKey] = config.family;
+      console.log(`  ✅ 字体 '${config.family}' 注册成功`);
+    } catch (e) {
+      console.warn(`  ⚠️ 字体 '${config.family}' (${config.src}) 注册失败:`, e);
+      hasError = true;
+      // 保持降级字体名称不变
     }
+  };
 
-    // 尝试注册IPA音标字体
-    const ipaAvailable = await checkFontAvailable('/fonts/DoulosSIL-Regular.ttf');
-    if (ipaAvailable) {
-      const success = await safeRegisterFont('Doulos SIL', '/fonts/DoulosSIL-Regular.ttf');
-      if (success) {
-        fontFamilies.ipa = 'Doulos SIL';
-        console.log('✅ IPA字体注册成功');
-      }
-    } else {
-      console.warn('❌ IPA字体文件不可用，使用降级字体');
-    }
+  registerFont({
+    family: 'AU School Handwriting Fonts',
+    src: '/fonts/AU-School-Handwriting-Fonts.ttf',
+    fontWeight: 'bold',
+  }, 'handwriting');
 
-    // 尝试注册中文字体 - 使用Nunito作为中文字体（已验证支持中文）
-    const chineseAvailable = await checkFontAvailable('/fonts/Nunito-Bold.ttf');
-    if (chineseAvailable) {
-      const success = await safeRegisterFont('Nunito Chinese', '/fonts/Nunito-Bold.ttf');
-      if (success) {
-        fontFamilies.chinese = 'Nunito Chinese';
-        console.log('✅ 中文字体注册成功');
-      }
-    } else {
-      console.warn('❌ 中文字体文件不可用，使用降级字体');
-      fontFamilies.chinese = fontFamilies.regular;
-    }
+  registerFont({ family: 'Doulos SIL', src: '/fonts/DoulosSIL-Regular.ttf' }, 'ipa');
+  
+  registerFont({ family: 'Source Han Sans CN', src: '/fonts/Source Han Sans CN Regular.otf' }, 'chinese');
+  
+  registerFont({ family: 'Charis SIL Regular', src: '/fonts/CharisSIL-Regular.ttf' }, 'regular');
 
-    // 尝试注册常规字体
-    const regularAvailable = await checkFontAvailable('/fonts/CharisSIL-Regular.ttf');
-    if (regularAvailable) {
-      const success = await safeRegisterFont('Charis SIL Regular', '/fonts/CharisSIL-Regular.ttf');
-      if (success) {
-        fontFamilies.regular = 'Charis SIL Regular';
-        console.log('✅ 常规字体注册成功');
-      }
-    } else {
-      console.warn('❌ 常规字体文件不可用，使用降级字体');
-    }
+  registerFont({ family: 'Charis SIL Bold', src: '/fonts/CharisSIL-Bold.ttf' }, 'bold');
 
-    // 尝试注册粗体字体  
-    const boldAvailable = await checkFontAvailable('/fonts/CharisSIL-Bold.ttf');
-    if (boldAvailable) {
-      const success = await safeRegisterFont('Charis SIL Bold', '/fonts/CharisSIL-Bold.ttf');
-      if (success) {
-        fontFamilies.bold = 'Charis SIL Bold';
-        console.log('✅ 粗体字体注册成功');
-      }
-    } else {
-      console.warn('❌ 粗体字体文件不可用，使用降级字体');
-    }
-
-    fontsRegistered = true;
-    console.log('✅ 字体初始化完成:', fontFamilies);
-  } catch (error) {
-    console.warn('⚠️ 字体注册过程中出现错误:', error);
-    // 保持默认降级字体
-    fontsRegistered = true;
-  } finally {
-    fontsInitializing = false;
+  fontsRegistered = true;
+  fontsInitializing = false;
+  
+  if (hasError) {
+    console.warn('⚠️ 字体初始化过程中部分字体注册失败，将使用降级字体。');
+  } else {
+    console.log('✅ 所有字体初始化完成:', fontFamilies);
   }
 };
 
@@ -225,7 +154,7 @@ const ExportSection: React.FC<ExportSectionProps> = ({ words }) => {
 const SmartPDFDownloadLink: React.FC<{ words: WordCard[] }> = ({ words }) => {
   const [isReady, setIsReady] = React.useState(false);
   const [hasError, setHasError] = React.useState(false);
-  const [wordsWithImages, setWordsWithImages] = React.useState<WordCard[]>(words);
+  const [wordsWithImages, setWordsWithImages] = React.useState<WordCard[]>(() => words);
   const [isGeneratingImages, setIsGeneratingImages] = React.useState(false);
 
   React.useEffect(() => {
@@ -243,10 +172,33 @@ const SmartPDFDownloadLink: React.FC<{ words: WordCard[] }> = ({ words }) => {
     init();
   }, []);
 
-  // 同步words变化
+  // 同步words变化，使用浅比较避免不必要更新
   React.useEffect(() => {
-    setWordsWithImages(words);
+    setWordsWithImages(prevWords => {
+      // 如果数组长度或内容没有实际变化，保持原引用
+      if (prevWords.length === words.length && 
+          words.every((word, index) => prevWords[index] === word)) {
+        return prevWords;
+      }
+      return words;
+    });
   }, [words]);
+  
+  // 🔧 修复无限重新渲染：使用useMemo缓存PDF文档和文件名
+  const pdfDocument = React.useMemo(() => {
+    return <WordCardsPDFDocument words={wordsWithImages} />;
+  }, [wordsWithImages]);
+  
+  const fileName = React.useMemo(() => {
+    return `英语单词卡片_${words.length}张.pdf`;
+  }, [words.length]); // 移除时间戳，避免无限变化
+
+  // 优化音标图片统计，避免重复计算
+  const imageStats = React.useMemo(() => {
+    const generatedCount = wordsWithImages.filter(w => w.ipaImage).length;
+    const hasAnyImages = generatedCount > 0;
+    return { generatedCount, hasAnyImages };
+  }, [wordsWithImages]);
 
   // 生成音标图片的处理函数
   const handleGenerateIpaImages = async () => {
@@ -299,10 +251,10 @@ const SmartPDFDownloadLink: React.FC<{ words: WordCard[] }> = ({ words }) => {
           </span>
         </button>
         
-        {wordsWithImages.some(w => w.ipaImage) && (
+        {imageStats.hasAnyImages && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-2">
             <p className="text-green-800 text-sm text-center">
-              ✅ 已生成 {wordsWithImages.filter(w => w.ipaImage).length}/{words.length} 个音标图片
+              ✅ 已生成 {imageStats.generatedCount}/{words.length} 个音标图片
             </p>
           </div>
         )}
@@ -310,8 +262,8 @@ const SmartPDFDownloadLink: React.FC<{ words: WordCard[] }> = ({ words }) => {
       
       {/* PDF下载按钮 */}
       <PDFDownloadLink
-        document={<WordCardsPDFDocument words={wordsWithImages} />}
-        fileName={`英语单词卡片_${words.length}张_${new Date().getTime()}.pdf`}
+        document={pdfDocument}
+        fileName={fileName}
         className="w-full block"
       >
         {({ loading }) => (
@@ -370,6 +322,7 @@ const pdfStyles = StyleSheet.create({
     padding: 0,
     display: 'flex',
     flexDirection: 'column',
+    alignItems: 'center',    // 添加卡片内容居中对齐
     position: 'relative',
     overflow: 'hidden',
   },
@@ -382,6 +335,7 @@ const pdfStyles = StyleSheet.create({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',    // 添加自身居中对齐
     overflow: 'hidden',
     margin: 0,
     padding: 0,
@@ -397,6 +351,7 @@ const pdfStyles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'flex-start',
+    alignItems: 'center',    // 添加水平居中对齐
     textAlign: 'center',
     border: DEBUG ? '1pt dashed #43a047' : undefined,
   },
@@ -406,6 +361,7 @@ const pdfStyles = StyleSheet.create({
     height: '22mm',
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',    // 添加自身居中对齐
     marginBottom: '1mm',    // 添加下边距
   },
   fourLineBackground: {
@@ -453,7 +409,6 @@ const pdfStyles = StyleSheet.create({
     fontFamily: fontFamilies.handwriting,
     color: '#1f2937',
     textAlign: 'center',
-    border: DEBUG ? '1pt dashed #ffb300' : undefined,
     position: 'relative',
     zIndex: 2,
     transform: 'translateY(-19%)',        // 保持网页版的垂直偏移
@@ -465,6 +420,7 @@ const pdfStyles = StyleSheet.create({
     color: '#3b82f6',
     marginBottom: '4mm',
     textAlign: 'center',
+    alignSelf: 'center',    // 添加自身居中对齐
     border: DEBUG ? '1pt dashed #8e24aa' : undefined,
   },
   ipaImage: {
@@ -479,6 +435,7 @@ const pdfStyles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
+    alignSelf: 'center',    // 添加自身居中对齐
     marginBottom: '2mm',
     gap: '1mm',
     border: DEBUG ? '1pt dashed #00acc1' : undefined,
@@ -510,7 +467,7 @@ const pdfStyles = StyleSheet.create({
   },
   meaning: {
     fontSize: 24,
-    fontFamily: fontFamilies.chinese,      // 使用中文字体
+    fontFamily: fontFamilies.chinese,      // 统一使用变量引用
     fontWeight: 'bold',
     color: '#1e293b',
     textAlign: 'center',
@@ -519,36 +476,33 @@ const pdfStyles = StyleSheet.create({
     border: DEBUG ? '1pt dashed #fb8c00' : undefined,
   },
   sentenceContainer: {
-    backgroundColor: '#f1f5f9',
-    borderRadius: '3mm',
-    padding: '4mm',
+    marginTop: 'auto', // 将例句推到底部
+    padding: 8,
+    backgroundColor: '#F3F4F6', // bg-gray-100
+    borderRadius: 6,
     width: '100%',
-    textAlign: 'center',
-    border: DEBUG ? '1pt dashed #616161' : '1pt solid #d1d5db',
   },
-  sentence: {
-    fontSize: 16,
-    fontFamily: fontFamilies.regular,
-    fontWeight: 'normal',
-    color: '#374151',
-    lineHeight: 1.5,
-    textAlign: 'left',                     // 改为左对齐
-    border: DEBUG ? '1pt dashed #3949ab' : undefined,
+  sentenceEnglish: {
+    fontSize: 10,
+    color: '#374151', // text-gray-700
+    marginBottom: 2,
+    fontFamily: fontFamilies.bold,
   },
   sentenceChinese: {
+    fontSize: 9,
+    color: '#4B5563', // text-gray-600
+    fontFamily: fontFamilies.chinese,
+  },
+  meaningText: {
     fontSize: 14,
-    fontFamily: fontFamilies.chinese,      // 使用中文字体
-    fontWeight: 'normal',
-    color: '#6b7280',
-    lineHeight: 1.5,
-    textAlign: 'left',
-    marginTop: '2mm',
-    border: DEBUG ? '1pt dashed #9c27b0' : undefined,
+    color: '#111827', // text-gray-900
+    textAlign: 'center',
+    fontFamily: fontFamilies.chinese,
   },
 });
 
 // PDF文档组件 - 稳定的字体系统
-const WordCardsPDFDocument: React.FC<{ words: WordCard[] }> = ({ words }) => {
+const WordCardsPDFDocument: React.FC<{ words: WordCard[] }> = React.memo(({ words }) => {
   const cardsPerPage = 4;
   const pages = [];
 
@@ -646,7 +600,7 @@ const WordCardsPDFDocument: React.FC<{ words: WordCard[] }> = ({ words }) => {
                           {/* 例句 */}
                           {word.sentenceEn && word.sentenceEn.trim() !== '' && (
                             <View style={pdfStyles.sentenceContainer}>
-                              <Text style={pdfStyles.sentence}>{word.sentenceEn}</Text>
+                              <Text style={pdfStyles.sentenceEnglish}>{word.sentenceEn}</Text>
                               {/* 中文例句翻译 */}
                               {word.sentenceCn && word.sentenceCn.trim() !== '' && (
                                 <Text style={pdfStyles.sentenceChinese}>{word.sentenceCn}</Text>
@@ -669,6 +623,6 @@ const WordCardsPDFDocument: React.FC<{ words: WordCard[] }> = ({ words }) => {
   }
 
   return <Document>{pages}</Document>;
-};
+});
 
 export default ExportSection;

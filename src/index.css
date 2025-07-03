@@ -41,90 +41,60 @@
   background-color: rgba(0, 255, 255, 0.1) !important;
 }
 
-/* 四线三格背景样式 - 超清晰版本 */
+/* 四线三格背景样式 - SVG实现版本，确保html2canvas兼容 */
 .four-line-grid {
-  margin-top: 0px; /* 还原为紧贴顶部 */
+  margin-top: -35px; /* 进一步向上移动四线三格，改善排版效果 */
   position: relative;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    transparent 20%,
-    #9ca3af 20%,
-    #9ca3af 21%,
-    transparent 21%,
-    transparent 40%,
-    #9ca3af 40%,
-    #9ca3af 41%,
-    transparent 41%,
-    transparent 60%,
-    #dc2626 60%,
-    #dc2626 61.5%,
-    transparent 61.5%,
-    transparent 80%,
-    #9ca3af 80%,
-    #9ca3af 81%,
-    transparent 81%,
-    transparent 100%
-  );
-
-  /* 更清晰的虚线效果 */
-  background-image: repeating-linear-gradient(
-      to right,
-      transparent 0px,
-      transparent 6px,
-      rgba(156, 163, 175, 0.9) 6px,
-      rgba(156, 163, 175, 0.9) 10px
-    ),
-    repeating-linear-gradient(
-      to right,
-      transparent 0px,
-      transparent 6px,
-      rgba(156, 163, 175, 0.9) 6px,
-      rgba(156, 163, 175, 0.9) 10px
-    ),
-    repeating-linear-gradient(
-      to right,
-      transparent 0px,
-      transparent 6px,
-      rgba(220, 38, 38, 1) 6px,
-      rgba(220, 38, 38, 1) 10px
-    ),
-    repeating-linear-gradient(
-      to right,
-      transparent 0px,
-      transparent 6px,
-      rgba(156, 163, 175, 0.9) 6px,
-      rgba(156, 163, 175, 0.9) 10px
-    );
-
-  background-position: 0 20%, 0 40%, 0 60%, 0 80%;
-
-  background-size: 100% 1px, 100% 1px, 100% 1.5px, 100% 1px;
-
-  background-repeat: repeat-x;
-  padding: 12px 16px;
-  min-height: 85px; /* 调高容器，避免文字顶破虚线 */
+  padding: 16px 16px; /* 增加上下内边距，确保线条间距正常 */
+  min-height: 110px; /* 稍微增加高度，给线条更多空间 */
   display: flex;
   align-items: center;
   justify-content: center;
-
-  /* 关键设置：85%宽度，上边距0px，下边距0px */
   width: 85%;
-  margin: 0px auto 0px auto;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 0px;
   background-color: transparent;
+  /* 移除边缘线 */
+  border: none;
 }
+
+/* 使用简单的线性渐变创建四线三格 - 清晰版本 */
+.four-line-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: 
+    /* 第一条虚线 (20%) */
+    linear-gradient(90deg, #6b7280 0px, #6b7280 8px, transparent 8px, transparent 12px) 0 20%/12px 1px repeat-x,
+    /* 第二条虚线 (40%) */
+    linear-gradient(90deg, #6b7280 0px, #6b7280 8px, transparent 8px, transparent 12px) 0 40%/12px 1px repeat-x,
+    /* 红色基线 (60%) - 实线 */
+    linear-gradient(90deg, #dc2626 0px, #dc2626 100%) 0 60%/100% 2px no-repeat,
+    /* 第四条虚线 (80%) */
+    linear-gradient(90deg, #6b7280 0px, #6b7280 8px, transparent 8px, transparent 12px) 0 80%/12px 1px repeat-x;
+}
+
+/* 移除::after伪元素，避免与::before重叠 */
 
 /* 四线三格字体样式 - 澳洲学校标准手写体优先 */
 .four-line-font {
-  font-family: "AU School Handwriting Fonts", "Kalam", "Comic Neue", "Comic Sans MS", "Apple Chancery", "Bradley Hand", "Lucida Handwriting", cursive;
-  font-weight: 700;
-  line-height: 1; /* 调高行高，便于基线更贴近红线 */
-  transform: translateY(-19%); /* 微调为 19%，最终肉眼验证贴红线 */
+  font-family: "AU School Handwriting Fonts", "Comic Sans MS", "Comic Neue",
+    "Kalam", cursive;
+  font-weight: 450; /* 调整字重为450 */
+  line-height: 1;
+  position: relative;
+  transform: translateY(-28%); /* 适度调整，让单词更好地对准红色基准线 */
+  font-size: 3rem; /* 字体大小调整为3.0rem (48px) */
   letter-spacing: 0.05em;
   text-align: center;
   color: #1f2937;
-  position: relative;
-  z-index: 2;
+  z-index: 10;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
@@ -134,7 +104,8 @@
 }
 
 .four-line-font-md {
-  font-size: 2.5rem; /* 40px，进一步放大 */
+  font-size: 3.0rem; /* 48px，按照您的要求调整 */
+  transform: translateY(-28%); /* 确保medium尺寸也适度调整 */
 }
 
 .four-line-font-lg {
@@ -148,7 +119,7 @@
 /* 卡片容器样式 - 倒角改为8px */
 .word-card {
   background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-  border: 2px solid #e2e8f0;
+  border: 2px solid #9ca3af; /* 改为更明显的灰色边框，便于区分边缘 */
   border-radius: 8px; /* 从16px改为8px */
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -172,7 +143,7 @@
   transform: translateY(-2px);
   box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  border-color: #cbd5e1;
+  border-color: #6b7280; /* 悬停时进一步加深边框颜色 */
 }
 
 /* 图片容器样式 - 50%高度 */
@@ -230,18 +201,22 @@
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
+  margin-top: -10px; /* 更明显地向上移动，防止色块靠下 */
 }
 
 .phonics-block {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-family: "Kalam", cursive;
+  display: inline-flex; /* 改为flex以更好地控制文字居中 */
+  align-items: center; /* 垂直居中 */
+  justify-content: center; /* 水平居中 */
+  padding: 2px 5px; /* 更明显地减小内边距，让色块明显更小 */
+  border-radius: 5px; /* 适度圆角 */
+  font-family: "AU School Handwriting Fonts", "Kalam", sans-serif;
   font-weight: 700;
-  font-size: 1.25rem;
+  font-size: 0.9rem; /* 更小的字体，让色块更精致 */
   color: white;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  min-width: 28px;
+  min-width: 20px; /* 更明显地减小宽度 */
+  min-height: 24px; /* 更明显地减小高度 */
   text-align: center;
   line-height: 1;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -294,16 +269,12 @@
 
 /* 中文释义样式 - 1.5rem字号，包含词性，行高1.0 */
 .meaning-text {
-  font-family: "Nunito", sans-serif;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-weight: 800;
   font-size: 1.5rem; /* 24px */
   color: #1e293b;
   margin-bottom: 15px; /* 调整为15px，距离灰色框15px */
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
   line-height: 1; /* 行高1.0 */
 }
 
@@ -314,7 +285,7 @@
   border-radius: 8px; /* 从12px改为8px */
   padding: 8px 8px; /* 从16px 20px改为8px 8px */
   text-align: left; /* 左对齐，不居中 */
-
+  
   /* 固定大小和位置 - 距离中文释义15px，左右边距10px */
   position: absolute;
   bottom: 20px; /* 距离卡片下边缘20px */
@@ -345,26 +316,29 @@
   color: #6b7280;
   font-size: 0.85rem;
   vertical-align: top; /* 确保序号与文本顶部对齐 */
+  font-family: "Nunito", sans-serif;
 }
 
 .sentence-english {
   font-weight: 600;
   color: #374151;
-  font-size: 16px; /* 桌面端16px */
+  font-size: 19.2px; /* 恢复：网页预览增大20% */
   display: inline-block;
   width: calc(100% - 20px); /* 减去序号的宽度 */
   vertical-align: top;
   line-height: 1.5;
+  font-family: "Nunito", sans-serif;
 }
 
 /* 中文翻译样式 - 21px左边距，2px上边距 */
 .sentence-chinese {
   font-weight: 600;
   color: #6b7280;
-  font-size: 15px; /* 桌面端15px */
+  font-size: 18px; /* 恢复：网页预览增大20% */
   margin-left: 21px; /* 从24px改为21px */
   margin-top: 2px; /* 从4px改为2px */
   line-height: 1.5;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 /* 保留原有样式以兼容 */
@@ -433,12 +407,12 @@
   .four-line-font-md {
     font-size: 1.75rem;
   }
-
+  
   .meaning-text {
     font-size: 1.3rem; /* 移动端从1.5rem调整为1.3rem */
     margin-bottom: 12px; /* 移动端调整为12px */
   }
-
+  
   .unified-sentence-container {
     padding: 12px 16px;
     bottom: 16px; /* 移动端距离下边缘16px */
@@ -446,38 +420,38 @@
     right: 8px; /* 移动端右边距8px */
     top: calc(16px + 1.3rem * 1 + 12px); /* 移动端调整计算 */
   }
-
+  
   .sentence-english {
     font-size: 14px; /* 移动端14px */
   }
-
+  
   .sentence-chinese {
     font-size: 13.5px; /* 移动端13.5px */
   }
-
+  
   .phonics-block {
     font-size: 0.75rem;
     padding: 4px 8px;
     min-width: 24px;
   }
-
+  
   .four-line-grid {
     width: 85%;
     margin: 0px auto 0px auto;
     padding: 10px 12px;
     min-height: 60px;
   }
-
+  
   .card-text-area {
     padding: 4px 12px 12px 12px; /* 移动端同样保留 4px 顶距 */
   }
-
+  
   .phonetic-text {
     font-size: 0.92rem;
     margin-top: 0px;
     margin-bottom: 0px;
   }
-
+  
   /* 移动端背面顶部内边距调整为16px */
   .card-back {
     padding: 16px 16px 16px 16px;
@@ -525,3 +499,499 @@
   background: linear-gradient(90deg, #3b82f6, #8b5cf6);
   border-radius: 1px;
 }
+
+/* A4页面打印优化样式 */
+.a4-page-container {
+  position: relative;
+  background: white;
+  box-sizing: border-box;
+  /* 移除页面级别的动效 */
+  transition: none;
+}
+
+.a4-page-container:hover {
+  transform: none;
+}
+
+/* 打印媒体查询 - 确保A4页面正确打印 */
+@media print {
+  .a4-page-container {
+    width: 210mm !important;
+    height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: always;
+    page-break-inside: avoid;
+  }
+  
+  /* 隐藏页面信息 */
+  .a4-page-container > div:last-child {
+    display: none;
+  }
+  
+  /* 确保卡片在打印时保持原有样式 */
+  .word-card {
+    page-break-inside: avoid;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* 优化空卡片在打印时的显示 */
+  .empty-card-slot {
+    border: 1px dashed #d1d5db !important;
+    background-color: #f9fafb !important;
+  }
+}
+
+/* 屏幕显示时的页面边距优化 */
+@media screen {
+  .a4-page-container {
+    margin: 20px auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e5e7eb;
+  }
+}
+
+/* 大屏幕显示优化 */
+@media screen and (min-width: 1200px) {
+  .a4-page-container {
+    transform: scale(0.9);
+    transform-origin: center top;
+  }
+}
+
+/* 中屏幕显示优化 */
+@media screen and (max-width: 1024px) and (min-width: 768px) {
+  .a4-page-container {
+    transform: scale(0.8);
+    transform-origin: center top;
+  }
+}
+
+/* 小屏幕显示优化 */
+@media screen and (max-width: 767px) {
+  .a4-page-container {
+    transform: scale(0.6);
+    transform-origin: center top;
+    margin: 10px auto;
+  }
+}
+
+/* 打印和导出模式样式优化 - 完全移除动效，保持布局稳定 */
+.print-mode,
+.print-mode * {
+  /* 禁用所有过渡动画和变换效果 */
+  transition: none !important;
+  animation: none !important;
+  /* 确保字体正确渲染 */
+  -webkit-font-smoothing: auto !important;
+  -moz-osx-font-smoothing: auto !important;
+  /* 禁用任何可能影响布局的属性 */
+  will-change: auto !important;
+  backface-visibility: visible !important;
+}
+
+/* 保留四线三格字体的特殊变换，其他元素禁用变换 */
+.print-mode *:not(.four-line-font):not(.four-line-font-md) {
+  transform: none !important;
+}
+
+.print-mode:hover,
+.print-mode *:hover:not(.four-line-font):not(.four-line-font-md) {
+  /* 移除所有悬停效果，保持静态状态，但保留四线三格字体的变换 */
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* 确保A4页面容器在打印模式下不受缩放影响 */
+.print-mode.a4-page-container {
+  /* 强制固定尺寸，避免任何变形 */
+  width: 794px !important;
+  height: 1123px !important;
+  min-width: 794px !important;
+  min-height: 1123px !important;
+  max-width: 794px !important;
+  max-height: 1123px !important;
+  /* 移除任何可能的变换 */
+  transform: none !important;
+  /* 确保正确的字体族 */
+  font-family: "AU School Handwriting Fonts", "Kalam", "Comic Neue", "Comic Sans MS", sans-serif !important;
+  background: white !important;
+  /* 完全移除阴影、边框和边距，确保纯净的打印效果 */
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  /* 确保没有任何圆角或其他装饰 */
+  border-radius: 0 !important;
+  /* 移除任何可能的轮廓或其他视觉效果 */
+  outline: none !important;
+}
+
+/* 打印模式下卡片样式优化 */
+.print-mode .word-card {
+  /* 确保卡片固定尺寸 */
+  width: 321px !important;
+  height: 453px !important;
+  /* 移除变换和动效 */
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  /* 确保边框和背景稳定 */
+  border: 1px solid #d1d5db !important;
+  background: white !important;
+}
+
+.print-mode .word-card:hover {
+  /* 禁用悬停效果 */
+  transform: none !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  border-color: #9ca3af !important; /* 保持与基础边框相同的颜色 */
+  transition: none !important;
+}
+
+/* 打印模式下图片容器优化 */
+.print-mode .card-image-container,
+.print-mode .card-image-container * {
+  /* 移除图片相关动效 */
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  overflow: hidden !important;
+}
+
+.print-mode .card-image-container:hover .card-image,
+.print-mode .card-image-container:hover * {
+  /* 禁用图片悬停效果 */
+  transform: none !important;
+  transition: none !important;
+}
+
+.print-mode .card-image {
+  /* 确保图片保持原始比例和位置 */
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  /* 确保图片完全填充且不变形 */
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+/* 四线三格在打印模式下的优化 - 使用html2canvas兼容的实现 */
+.print-mode .four-line-grid {
+  /* 确保四线三格样式稳定 */
+  position: relative !important;
+  background-color: transparent !important;
+  padding: 20px 16px !important; /* 增加上下内边距，给单词更多对齐空间 */
+  margin-top: 8px !important; /* 恢复到备份文档中的成功配置 */
+}
+
+/* 打印模式下增强四线三格显示 - 保持伪元素并添加DOM增强 */
+.print-mode .four-line-grid::before {
+  /* 增强伪元素的显示效果 */
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  background: 
+    /* 第一条虚线 (20%) */
+    linear-gradient(90deg, #4b5563 0px, #4b5563 10px, transparent 10px, transparent 14px) 0 20%/14px 1.5px repeat-x,
+    /* 第二条虚线 (40%) */
+    linear-gradient(90deg, #4b5563 0px, #4b5563 10px, transparent 10px, transparent 14px) 0 40%/14px 1.5px repeat-x,
+    /* 红色基线 (60%) */
+    linear-gradient(90deg, #dc2626 0px, #dc2626 10px, transparent 10px, transparent 14px) 0 60%/14px 2px repeat-x,
+    /* 第四条虚线 (80%) */
+    linear-gradient(90deg, #4b5563 0px, #4b5563 10px, transparent 10px, transparent 14px) 0 80%/14px 1.5px repeat-x !important;
+}
+
+/* 禁用原有的::after伪元素以避免冲突 */
+.print-mode .four-line-grid::after {
+  display: none !important;
+}
+
+/* 确保四线三格内的字体元素不继承背景样式 */
+.print-mode .four-line-grid .four-line-font,
+.print-mode .four-line-grid .four-line-font-md {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* 拼读分拆背景色块在打印模式下的优化 */
+.print-mode .phonics-segment {
+  /* 确保色块位置和尺寸稳定 */
+  display: inline-block !important;
+  position: relative !important;
+  /* 禁用变换 */
+  transform: none !important;
+  transition: none !important;
+}
+
+/* 字体在打印模式下的优化 */
+.print-mode .four-line-font-md {
+  font-size: 48px !important; /* 调整为48px */
+  line-height: 1 !important; /* 保持与基础版本一致 */
+  font-family: "AU School Handwriting Fonts", "Kalam", sans-serif !important;
+  transform: translateY(-30%) !important; /* 恢复到备份文档中的成功配置 */
+  font-weight: 450 !important; /* 调整字重为450 */
+  letter-spacing: 0.05em !important;
+  color: #1f2937 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  z-index: 15 !important; /* 确保字体在四线三格之上 */
+  position: relative !important;
+}
+
+/* 打印模式下调整音标位置 */
+.print-mode .phonetic-text {
+  font-size: 25px !important; /* 1.25rem */
+  font-family: "Nunito", sans-serif !important;
+  margin-top: -5px !important; /* 更大的负上边距，使音标明显上移 */
+  margin-bottom: 8px !important; /* 调整下边距 */
+  transform: translateY(-5px) !important; /* 双重调整：transform + margin */
+  position: relative !important;
+  top: -10px !important; /* 第三重调整：top定位 */
+}
+
+/* 打印模式下调整拼读色块容器位置 */
+.print-mode .phonics-container {
+  margin-top: 8px !important; /* 恢复原来的位置 */
+  margin-bottom: 0px !important;
+}
+
+.print-mode .meaning-text {
+  font-size: 24px !important; /* 1.5rem */
+  line-height: 1.3 !important;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif !important;
+  margin-top: -10px !important; /* 下载图片模式下上移中文释义，增大与下方例句的间距 */
+}
+
+.print-mode .sentence-english {
+  font-size: 21.6px !important; /* 恢复：在原始基础上减小10% */
+  font-family: "Nunito", sans-serif !important;
+  color: #333 !important;
+}
+
+.print-mode .sentence-chinese {
+  font-size: 19.8px !important; /* 恢复：在原始基础上减小10% */
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif !important;
+  color: #555 !important;
+}
+
+.print-mode .phonics-block {
+  font-size: 28px !important; /* 字体大小28px */
+  line-height: 0.7 !important; /* 适中的行高，避免过度紧凑 */
+  font-family: "AU School Handwriting Fonts", "Kalam", sans-serif !important;
+  padding: 0px 12px 28px 12px !important; /* 增加水平padding，让色块更宽 */
+  display: flex !important; /* 使用flex精确控制 */
+  align-items: flex-start !important; /* 文字严格对齐到顶部 */
+  justify-content: center !important; /* 水平居中 */
+  position: relative !important;
+  min-height: 50px !important; /* 进一步增加色块高度到50px */
+  height: auto !important; /* 让高度自适应，但不小于min-height */
+  box-shadow: none !important;
+  /* 不移动整个色块，专注于内部文字位置 */
+  transform: none !important; /* 完全不移动色块 */
+  margin-top: 0px !important; /* 不使用负边距 */
+  /* 强制覆盖所有nth-child背景色为实色 */
+}
+
+/* 打印模式下拼读色块使用实色背景 */
+.print-mode .phonics-block:nth-child(1) {
+  background-color: rgba(147, 197, 253, 0.8) !important; /* 蓝色80%透明度 */
+  color: #1e40af !important;
+}
+.print-mode .phonics-block:nth-child(2) {
+  background-color: rgba(252, 165, 165, 0.8) !important; /* 红色80%透明度 */
+  color: #dc2626 !important;
+}
+.print-mode .phonics-block:nth-child(3) {
+  background-color: rgba(110, 231, 183, 0.8) !important; /* 绿色80%透明度 */
+  color: #059669 !important;
+}
+.print-mode .phonics-block:nth-child(4) {
+  background-color: rgba(251, 191, 36, 0.8) !important; /* 黄色80%透明度 */
+  color: #d97706 !important;
+}
+.print-mode .phonics-block:nth-child(5) {
+  background-color: rgba(196, 181, 253, 0.8) !important; /* 紫色80%透明度 */
+  color: #7c3aed !important;
+}
+.print-mode .phonics-block:nth-child(6) {
+  background-color: rgba(103, 232, 249, 0.8) !important; /* 青色80%透明度 */
+  color: #0891b2 !important;
+}
+.print-mode .phonics-block:nth-child(7) {
+  background-color: rgba(167, 243, 208, 0.8) !important; /* 绿色80%透明度 */
+  color: #65a30d !important;
+}
+.print-mode .phonics-block:nth-child(8) {
+  background-color: rgba(253, 186, 116, 0.8) !important; /* 橙色80%透明度 */
+  color: #ea580c !important;
+}
+
+/* 打印模式下强制使用嵌入的手写字体 - 最高优先级 */
+.print-mode .four-line-font,
+.print-mode .four-line-font-md,
+.print-mode .four-line-grid .four-line-font,
+.print-mode .four-line-grid .four-line-font-md {
+  font-family: "AU School Handwriting Fonts" !important;
+  /* 移除所有备用字体，强制使用嵌入字体 */
+  font-weight: 700 !important;
+  font-style: normal !important;
+}
+
+/* 预览模式样式 - 专门用于网页预览，与打印模式完全分离 */
+.preview-mode .four-line-grid {
+  position: relative;
+  background-color: transparent;
+  padding: 16px 12px; /* 减少padding，让四线三格整体缩小 */
+  min-height: 95px; /* 减少高度 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 78%; /* 减少宽度从85%到78% */
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 0px; /* 恢复四线三格原始位置 */
+  margin-bottom: 0px;
+  border: none;
+}
+
+.preview-mode .four-line-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: 
+    /* 第一条虚线 (20%) */
+    linear-gradient(90deg, #6b7280 0px, #6b7280 8px, transparent 8px, transparent 12px) 0 20%/12px 1px repeat-x,
+    /* 第二条虚线 (40%) */
+    linear-gradient(90deg, #6b7280 0px, #6b7280 8px, transparent 8px, transparent 12px) 0 40%/12px 1px repeat-x,
+    /* 红色基线 (60%) - 实线 */
+    linear-gradient(90deg, #dc2626 0px, #dc2626 100%) 0 60%/100% 2px no-repeat,
+    /* 第四条虚线 (80%) */
+    linear-gradient(90deg, #6b7280 0px, #6b7280 8px, transparent 8px, transparent 12px) 0 80%/12px 1px repeat-x;
+}
+
+.preview-mode .four-line-font-md {
+  font-size: 3.0rem; /* 48px */
+  line-height: 1;
+  font-family: "AU School Handwriting Fonts", "Comic Sans MS", "Comic Neue", "Kalam", cursive;
+  transform: translateY(calc(-10% - 3px)); /* 在-10%的基础上再上移3px */
+  font-weight: 450;
+  letter-spacing: 0.05em;
+  text-align: center;
+  color: #1f2937;
+  z-index: 10;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.preview-mode .phonetic-text {
+  font-family: "Nunito", sans-serif;
+  font-weight: 600;
+  color: #3b82f6;
+  font-size: 1.25rem;
+  display: inline-block;
+  margin-top: -10px; /* 设置为负值，实现音标上移 */
+  margin-bottom: 15px; /* 恢复原始值，确保与下方拼读模块的间距不变 */
+}
+
+.preview-mode .phonics-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 5px; /* 从-10px改为5px，实现下移 */
+}
+
+.preview-mode .phonics-block {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px; /* 增加水平内边距，让色块更宽 */
+  border-radius: 5px;
+  font-family: "AU School Handwriting Fonts", "Kalam", sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem; /* 字体大小同步扩大到24px */
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  min-width: 30px; /* 增加最小宽度，避免太细 */
+  min-height: 48px; /* 高度扩大到48px */
+  text-align: center;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 预览模式下拼读色块颜色 - 20%透明度 */
+.preview-mode .phonics-block:nth-child(1) {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #1e40af;
+}
+.preview-mode .phonics-block:nth-child(2) {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
+.preview-mode .phonics-block:nth-child(3) {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #059669;
+}
+.preview-mode .phonics-block:nth-child(4) {
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #d97706;
+}
+.preview-mode .phonics-block:nth-child(5) {
+  background-color: rgba(139, 92, 246, 0.2);
+  color: #7c3aed;
+}
+.preview-mode .phonics-block:nth-child(6) {
+  background-color: rgba(6, 182, 212, 0.2);
+  color: #0891b2;
+}
+.preview-mode .phonics-block:nth-child(7) {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #65a30d;
+}
+.preview-mode .phonics-block:nth-child(8) {
+  background-color: rgba(234, 88, 12, 0.2);
+  color: #ea580c;
+}
+
+.preview-mode .sentence-english-line {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: flex-start !important;
+}
+
+.preview-mode .sentence-number {
+  flex-shrink: 0 !important;
+  margin-right: 8px !important; /* 间距增大 */
+  width: 14px; /* 固定宽度以对齐 */
+  font-size: 17px; /* 字体缩小 */
+}
+
+.preview-mode .sentence-chinese {
+  margin-left: 22px !important; /* 22px = width 14px + margin-right 8px */
+}
+
+.print-mode .sentence-number {
+  font-size: 20px !important; /* 字体缩小 */
+  padding-right: 12px !important; /* 间距增大 */
+}
+
+.print-mode .card-back .meaning-text {
+  font-size: 24px !important;
+  line-height: 1.3 !important;
+}
+
+

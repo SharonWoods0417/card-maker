@@ -1,6 +1,43 @@
 import { WordCard } from '../types';
 import { splitPhonics, formatWordForStorage } from './dictionary';
 
+// 使用Canvas生成本地图片，避免跨域问题
+const generateWordImage = (word: string): string => {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  
+  canvas.width = 300;
+  canvas.height = 200;
+  
+  // 生成基于单词的颜色
+  const colors = [
+    '#E3F2FD', '#F3E5F5', '#E8F5E8', '#FFF3E0', '#FCE4EC', 
+    '#E0F2F1', '#F1F8E9', '#FFF8E1', '#FFEBEE', '#E8EAF6'
+  ];
+  
+  const colorIndex = word.charCodeAt(0) % colors.length;
+  const bgColor = colors[colorIndex];
+  
+  // 绘制背景
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, 300, 200);
+  
+  // 绘制单词
+  ctx.fillStyle = '#424242';
+  ctx.font = 'bold 24px "Comic Sans MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(word.toUpperCase(), 150, 100);
+  
+  // 绘制装饰边框
+  ctx.strokeStyle = '#9E9E9E';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, 300, 200);
+  
+  return canvas.toDataURL('image/png');
+};
+
 export const generateSampleWords = (): WordCard[] => {
   return [
     {
@@ -10,7 +47,7 @@ export const generateSampleWords = (): WordCard[] => {
       meaningCn: '苹果',
       sentenceEn: 'I eat an apple every day.',
       sentenceCn: '我每天吃一个苹果。',
-      imageUrl: 'https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
+      imageUrl: generateWordImage('apple'),
       phonics: splitPhonics('apple')
     },
     {
@@ -20,7 +57,7 @@ export const generateSampleWords = (): WordCard[] => {
       meaningCn: '书本',
       sentenceEn: 'This is a very interesting book.',
       sentenceCn: '这是一本非常有趣的书。',
-      imageUrl: 'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
+      imageUrl: generateWordImage('book'),
       phonics: splitPhonics('book')
     },
     {
@@ -30,7 +67,7 @@ export const generateSampleWords = (): WordCard[] => {
       meaningCn: '猫',
       sentenceEn: 'The cat is sleeping on the sofa.',
       sentenceCn: '猫正在沙发上睡觉。',
-      imageUrl: 'https://images.pexels.com/photos/104827/cat-pet-animal-domestic-104827.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
+      imageUrl: generateWordImage('cat'),
       phonics: splitPhonics('cat')
     },
     {
@@ -40,7 +77,7 @@ export const generateSampleWords = (): WordCard[] => {
       meaningCn: '狗',
       sentenceEn: 'My dog likes to play in the park.',
       sentenceCn: '我的狗喜欢在公园里玩耍。',
-      imageUrl: 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
+      imageUrl: generateWordImage('dog'),
       phonics: splitPhonics('dog')
     },
     {
@@ -50,7 +87,7 @@ export const generateSampleWords = (): WordCard[] => {
       meaningCn: '大象',
       sentenceEn: 'The elephant is the largest land animal.',
       sentenceCn: '大象是最大的陆地动物。',
-      imageUrl: 'https://images.pexels.com/photos/66898/elephant-cub-tsavo-kenya-66898.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
+      imageUrl: generateWordImage('elephant'),
       phonics: splitPhonics('elephant')
     },
     {
@@ -60,7 +97,7 @@ export const generateSampleWords = (): WordCard[] => {
       meaningCn: '花朵',
       sentenceEn: 'She gave me a beautiful flower.',
       sentenceCn: '她给了我一朵美丽的花。',
-      imageUrl: 'https://images.pexels.com/photos/56866/garden-rose-red-pink-56866.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
+      imageUrl: generateWordImage('flower'),
       phonics: splitPhonics('flower')
     },
     {
@@ -70,7 +107,7 @@ export const generateSampleWords = (): WordCard[] => {
       meaningCn: '房子',
       sentenceEn: 'We live in a big house.',
       sentenceCn: '我们住在一个大房子里。',
-      imageUrl: 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
+      imageUrl: generateWordImage('house'),
       phonics: splitPhonics('house')
     },
     {
@@ -80,7 +117,7 @@ export const generateSampleWords = (): WordCard[] => {
       meaningCn: '星期一',
       sentenceEn: 'Today is Monday.',
       sentenceCn: '今天是星期一。',
-      imageUrl: 'https://images.pexels.com/photos/1020315/pexels-photo-1020315.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
+      imageUrl: generateWordImage('Monday'),
       phonics: splitPhonics('Monday')
     }
   ];

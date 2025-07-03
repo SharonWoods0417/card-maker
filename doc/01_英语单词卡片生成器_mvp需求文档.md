@@ -144,7 +144,7 @@ async function getWordEntry(word: string): Promise<WordEntry> {
 
 ### 卡片展示
 
-- 每张卡片尺寸：85 × 135 mm，A4 纸 2×2 排布
+- 每张卡片尺寸：85 × 120 mm，A4 纸 2×2 排布
 - 网页支持分页浏览，预览正反面切换
 - 设计风格为白底、圆角、纸质感卡片
 - 支持调试视图（高亮边框、字段标签等）

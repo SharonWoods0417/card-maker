@@ -2,8 +2,16 @@
   "name": "english-word-card-maker",
   "private": true,
   "version": "1.2.0",
-  "description": "英语单词卡片生成器 - 基于Oxford Phonics v2.7规则的专业拼读教学工具",
-  "keywords": ["phonics", "english", "education", "oxford", "word-cards", "typescript", "react"],
+  "description": "英语单词卡片生成器 - 基于Oxford Phonics v3.1规则的专业拼读教学工具",
+  "keywords": [
+    "phonics",
+    "english",
+    "education",
+    "oxford",
+    "word-cards",
+    "typescript",
+    "react"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,12 +21,15 @@
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.3.0",
+    "html2canvas": "^1.4.1",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@types/jszip": "^3.4.0",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

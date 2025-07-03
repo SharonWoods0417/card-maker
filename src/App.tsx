@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import InputSection from './components/InputSection';
-import CardPreview from './components/CardPreview';
 import ExportSection from './components/ExportSection';
 import APIUsageDisplay from './components/APIUsageDisplay';
 import { WordCard } from './types';
@@ -66,19 +65,14 @@ function App() {
         {/* 🔧 调试功能区域结束 */}
         {/* ======================================== */}
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 左栏：输入区域 */}
+        <div className="max-w-4xl mx-auto">
+          {/* 输入区域 */}
           <div className="space-y-6">
             <InputSection
               words={words}
               onWordsChange={setWords}
               onGenerateSample={handleGenerateSample}
             />
-          </div>
-          
-          {/* 右栏：预览和导出区域 */}
-          <div className="space-y-6">
-            <CardPreview words={words} showDebugControls={showDebugControls} />
           </div>
         </div>
         

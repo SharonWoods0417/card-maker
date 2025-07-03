@@ -84,8 +84,49 @@ const InputSection: React.FC<InputSectionProps> = ({ words, onWordsChange, onGen
     }
   };
 
-  // 生成默认图片URL
+  // 使用Canvas生成本地图片，避免跨域问题
+  const generateWordImage = (word: string): string => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    
+    canvas.width = 300;
+    canvas.height = 200;
+
+    // 生成基于单词的颜色
+    const colors = [
+      '#E3F2FD', '#F3E5F5', '#E8F5E8', '#FFF3E0', '#FCE4EC', 
+      '#E0F2F1', '#F1F8E9', '#FFF8E1', '#FFEBEE', '#E8EAF6'
+    ];
+    
+    const colorIndex = word.charCodeAt(0) % colors.length;
+    const bgColor = colors[colorIndex];
+    
+    // 绘制背景
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, 300, 200);
+
+    // 绘制单词
+    ctx.fillStyle = '#424242';
+    ctx.font = 'bold 24px "Comic Sans MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(word.toUpperCase(), 150, 100);
+    
+    // 绘制装饰边框
+    ctx.strokeStyle = '#9E9E9E';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(0, 0, 300, 200);
+    
+    return canvas.toDataURL('image/png');
+  };
+
+  // 生成默认图片URL - 优先使用Canvas生成的本地图片
   const generateImageUrl = (word: string): string => {
+    // 先尝试使用Canvas生成的单色图片，避免跨域问题
+    return generateWordImage(word);
+    
+    // 备用方案：外部图片（可能有跨域问题）
     const imageMap: { [key: string]: string } = {
       'apple': 'https://images.pexels.com/photos/102104/pexels-photo-102104.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
       'book': 'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=300&h=200',
@@ -126,7 +167,7 @@ const InputSection: React.FC<InputSectionProps> = ({ words, onWordsChange, onGen
   const applyManualWords = async () => {
     const validWords = await Promise.all(
       manualWords
-        .filter(w => w.trim())
+      .filter(w => w.trim())
         .map((word, index) => createWordCard(word.trim(), index, 'manual'))
     );
     

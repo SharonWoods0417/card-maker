@@ -223,21 +223,23 @@ export function exportCustomDict(): void {
 }
 
 // ========================================
-// 🎯 Oxford Phonics 自然拼读拆分算法 v2.7
-// 基于最新Oxford Phonics Split Rules v2.7规范
+// 🎯 Oxford Phonics 自然拼读拆分算法 v3.1
+// 基于最新Oxford Phonics Split Rules v3.1规范
 // 核心理念：拼读块 = 音素块（Phonics = Phonemes）
 // 适用于6-10岁儿童英文拼读教学、发音辅助训练
+// 新增v3.1: 辅音组合起始块识别(fl/tr/bl/gr) + Vowel Teams拆分优先级提升
 // ========================================
 
 /**
- * 基于Oxford Phonics规则v2.7的单词拆分
+ * 基于Oxford Phonics规则v3.1的单词拆分
  * 核心原则：
- * 1. 音素映射对齐 - 每个拼读块对应一个或一组连续音素
- * 2. 不可拆组合保护 - 保护digraphs、vowel teams、magic-e等
- * 3. 起始组合保护 - el/em/en等在词首整体保留
- * 4. digraph独立性优先 - ph等必须单独成块
- * 5. 语音优先级 > 音节结构 - 以发音结构为主
- * 6. 拼读块构建方法 - 按优先级构建拼读块
+ * v3.1核心变更:
+ * 1. 规则9：辅音组合起始块识别 - fl/tr/bl/gr等必须整体保留（如flower→fl-ow-er）
+ * 2. 规则10：Vowel Teams拆分优先级提升 - ow/oy/oi/ai/ay/ee等必须整体保留
+ * 3. 继承v3.0所有特性：闭音节优先、Final C+le匹配优化
+ * 4. 音素映射对齐 - 每个拼读块对应一个或一组连续音素
+ * 5. 不可拆组合保护 - 保护digraphs、vowel teams、magic-e等
+ * 6. 语音优先级 > 音节结构 - 以发音结构为主
  * 
  * 输入：单词字符串
  * 输出：拼读块数组
@@ -252,83 +254,114 @@ export function splitPhonics(word: string): string[] {
   }
   try {
     const isDebug = import.meta.env.DEV;
-    // v2.7拆分优先级：音素映射对齐
-    // 1. 例外词查表
-    const exceptionResult = checkExceptionWordsV27(cleanWord);
+
+    // v3.1 拆分逻辑
+    
+    // 1. 例外词查表 (最高优先级)
+    const exceptionResult = checkExceptionWordsV30(cleanWord);
     if (exceptionResult.length > 0) {
       if (isDebug) console.log(`🎯 例外词拆分 ${word}: [${exceptionResult.join(', ')}]`);
       return exceptionResult;
     }
-    // 2. 起始组合保护（el/em/en）
-    const startCombo = matchStartingComboV27(cleanWord);
-    let remaining = cleanWord;
+    
+    // 2. Final 'C+le' 规则 (继承v3.0)
+    // 优先处理 'C+le' 结尾的单词，如 apple -> ap + ple
+    const cleMatch = matchFinalCleV30(cleanWord);
+    if (cleMatch) {
+      const mainPart = cleanWord.slice(0, -cleMatch.length);
+      // 对前半部分递归应用完整的拆分规则
+      const mainChunks = splitPhonics(mainPart); 
+      return [...mainChunks, cleMatch];
+    }
+    
+    // 3. 对非 'C+le' 单词或递归的子部分，应用v3.1标准流程
     const result: string[] = [];
+    let remaining = cleanWord;
+
+    const startCombo = matchStartingComboV30(remaining);
     if (startCombo) {
       result.push(startCombo);
       remaining = remaining.slice(startCombo.length);
     }
-    // 3. 前缀/后缀
-    const prefixMatch = matchPrefixV27(remaining);
+    
+    const prefixMatch = matchPrefixV30(remaining);
     if (prefixMatch) {
       result.push(prefixMatch);
       remaining = remaining.slice(prefixMatch.length);
     }
-    const suffixMatch = matchSuffixV27(remaining);
+    
+    const suffixMatch = matchSuffixV30(remaining);
     let suffix = '';
     if (suffixMatch) {
       suffix = suffixMatch;
       remaining = remaining.slice(0, -suffixMatch.length);
     }
-    // 4. 处理中间部分（v2.7音素对齐拆分）
-    const middleParts = splitMiddlePartV27(remaining);
+    
+    const middleParts = splitMiddlePartV30(remaining);
     result.push(...middleParts);
-    // 5. 添加后缀
+    
     if (suffix) {
       result.push(suffix);
     }
+    
     return result.filter(part => part.length > 0);
+
   } catch (error) {
     console.error(`❌ 拼读拆分失败: ${word}`, error);
     return [word];
   }
 }
 
-// v2.7例外词查表（完整版）
-function checkExceptionWordsV27(word: string): string[] {
+// v3.0 例外词查表 (基于v2.9，可按需更新)
+function checkExceptionWordsV30(word: string): string[] {
   const exceptions: Record<string, string[]> = {
     // 发音与拼写严重不一致的词
-    'said': ['s', 'ai', 'd'],        // ai发/ɛ/
-    'have': ['h', 'a', 've'],        // e不发音
-    'again': ['a', 'g', 'ai', 'n'],  // ai发短音
-    'one': ['one'],                  // 整体发音/wʌn/
-    'two': ['two'],                  // 整体发音/tuː/
-    'does': ['does'],                // 整体发音/dʌz/
-    'done': ['done'],                // 整体发音/dʌn/
-    'gone': ['gone'],                // 整体发音/gɒn/
-    'any': ['any'],                  // 整体发音/ˈɛni/
-    'been': ['been'],                // 整体发音/bɪn/
-    'are': ['are'],                  // 整体发音/ɑːr/
-    'were': ['were'],                // 整体发音/wɜːr/
-    'was': ['was'],                  // 整体发音/wɒz/
-    'what': ['what'],                // wh发/w/
-    'who': ['who'],                  // wh发/h/
-    'where': ['where'],              // 整体处理
-    'when': ['when'],                // 整体处理
-    'why': ['why'],                  // 整体处理
-    'come': ['come'],                // o发/ʌ/
-    'some': ['some'],                // o发/ʌ/
+    'said': ['s', 'ai', 'd'], // ai发/ɛ/
+    'have': ['h', 'a', 've'], // e不发音
+    'one': ['one'], // 整体发音/wʌn/
+    'two': ['two'], // 整体发音/tuː/
+    'done': ['done'], // 整体发音/dʌn/
+    'gone': ['g', 'o', 'ne'], // o发/ɒ/
+    'some': ['s', 'o', 'me'], // o发/ʌ/
+    'come': ['c', 'o', 'me'], // o发/ʌ/
+    'love': ['l', 'o', 've'], // o发/ʌ/
+    'give': ['g', 'i', 've'], // i发/ɪ/
+    'live': ['l', 'i', 've'], // i发/ɪ/
+    'move': ['m', 'o', 've'], // o发/uː/
+    'lose': ['l', 'o', 'se'], // o发/uː/
+    'above': ['a', 'b', 'o', 've'], // o发/ʌ/
+    'what': ['wh', 'a', 't'], // a发/ɒ/
+    'who': ['wh', 'o'], // o发/uː/
+    'where': ['wh', 'ere'], // ere发/eə/
+    'when': ['wh', 'e', 'n'], // e发/ɛ/
+    'why': ['wh', 'y'], // y发/aɪ/
+    'which': ['wh', 'i', 'ch'], // i发/ɪ/
+    'whose': ['wh', 'o', 'se'], // o发/uː/
+    'how': ['h', 'ow'], // ow发/aʊ/
+    'are': ['are'], // 整体发音/ɑː/
+    'were': ['w', 'ere'], // ere发/ɜː/
+    'was': ['w', 'a', 's'], // a发/ɒ/
+    'does': ['d', 'oe', 's'], // oe发/ʌ/
+    'friend': ['fr', 'ie', 'n', 'd'], // ie发/ɛ/
+    'again': ['a', 'g', 'ai', 'n'], // ai发/ɛ/
+    'any': ['a', 'n', 'y'], // a发/ɛ/
+    'many': ['m', 'a', 'n', 'y'], // a发/ɛ/
+    'been': ['b', 'ee', 'n'], // ee发/ɪ/
+    'eye': ['eye'], // 整体发音/aɪ/
+    'sugar': ['s', 'u', 'g', 'ar'], // s发/ʃ/
   };
+
   return exceptions[word] || [];
 }
 
-// v2.7起始组合保护（修正逻辑）
-function matchStartingComboV27(word: string): string | null {
-  // 只在词首且不与前缀冲突时匹配
+// v3.0 起始组合保护
+function matchStartingComboV30(word: string): string | null {
+  // v3.0 继承v2.7起始组合保护：el, em, en（只在词首且不与前缀冲突时匹配）
   const combos = ['el', 'em', 'en'];
   for (const combo of combos) {
     if (word.startsWith(combo) && word.length > combo.length) {
       // 确保不与常见前缀冲突：如果单词以前缀开头，则不应用起始组合保护
-      const prefixes = ['re', 'un', 'pre', 'dis', 'mis', 'non', 'over', 'under'];
+      const prefixes = ['re', 'un', 'pre', 'dis', 'mis', 'non', 'sub', 'inter'];
       const hasPrefix = prefixes.some(prefix => word.startsWith(prefix));
       if (!hasPrefix) {
         return combo;
@@ -338,9 +371,9 @@ function matchStartingComboV27(word: string): string | null {
   return null;
 }
 
-// v2.7前缀/后缀（可扩展）
-function matchPrefixV27(word: string): string | null {
-  const prefixes = ['re', 'un', 'pre', 'dis', 'mis', 'non', 'over', 'under'];
+// v3.0 前缀/后缀
+function matchPrefixV30(word: string): string | null {
+  const prefixes = ['un', 're', 'pre', 'dis', 'mis', 'non', 'sub', 'inter'];
   for (const prefix of prefixes) {
     if (word.startsWith(prefix) && word.length > prefix.length) {
       return prefix;
@@ -348,45 +381,100 @@ function matchPrefixV27(word: string): string | null {
   }
   return null;
 }
-function matchSuffixV27(word: string): string | null {
-  const suffixes = ['ing', 'ed', 'ful', 'less', 'ness', 'ment', 'ly', 'est', 'er'];
+function matchSuffixV30(word: string): string | null {
+  const suffixes = ['ing', 'ed', 'er', 'est', 'ly', 'ful', 'less', 'ness', 'ment', 'tion'];
+  
   for (const suffix of suffixes) {
     if (word.endsWith(suffix) && word.length > suffix.length) {
+      // v3.1优化：避免将R-controlled元音模式误识别为后缀
+      // 如果是'er'后缀，需要检查前面是否是辅音+元音的模式
+      if (suffix === 'er') {
+        const beforeEr = word.slice(0, -2);
+        // 如果'er'前面是元音，则更可能是R-controlled模式而非后缀
+        // 例如：flower中的'ow'+'er'应该识别为vowel team + R-controlled
+        if (beforeEr.length >= 2) {
+          const lastTwoChars = beforeEr.slice(-2);
+          const vowelTeams = ['ai', 'ay', 'ee', 'ea', 'oa', 'oo', 'ue', 'ew', 'ie', 'igh', 'ou', 'ow', 'oy', 'oi', 'ey', 'ui'];
+          if (vowelTeams.includes(lastTwoChars)) {
+            // 'er'前面是vowel team，不作为后缀处理
+            continue;
+          }
+        }
+      }
       return suffix;
     }
   }
   return null;
 }
 
-// v2.7中间部分拆分（digraph独立性优先、不可拆组合保护）
-function splitMiddlePartV27(word: string): string[] {
+// v3.0 中间部分拆分
+function splitMiddlePartV30(word: string): string[] {
   if (!word) return [];
+
+  // v3.1 规则7: 闭音节（VC）优先划分（修正版）
+  // 只有在确认不包含特殊组合模式的情况下，才将短词作为整体闭音节处理
+  if (word.length <= 4) {
+    const vowelCount = word.split('').filter(isVowel).length;
+    // 检查是否为简单闭音节：单个元音且以辅音结尾
+    if (vowelCount === 1 && !isVowel(word[word.length - 1])) {
+      // v3.1优化：检查是否包含需要拆分的组合模式
+      let hasSpecialPatterns = false;
+      
+      // 检查是否包含辅音组合（规则9）
+      for (let i = 0; i < word.length; i++) {
+        if (matchConsonantClustersV31(word, i)) {
+          hasSpecialPatterns = true;
+          break;
+        }
+      }
+      
+      // 检查是否包含元音组合（规则10）
+      if (!hasSpecialPatterns) {
+        for (let i = 0; i < word.length; i++) {
+          const vowelTeamMatch = matchDigraphsV31(word, i);
+          if (vowelTeamMatch && vowelTeamMatch.length > 1) {
+            hasSpecialPatterns = true;
+            break;
+          }
+        }
+      }
+      
+      // 只有在没有特殊模式的情况下，才作为整体闭音节处理
+      if (!hasSpecialPatterns) {
+        const vowelIndex = word.split('').findIndex(isVowel);
+        if (vowelIndex >= 0 && vowelIndex < word.length - 1) {
+          return [word]; // 整个词作为一个闭音节拼读块
+        }
+      }
+    }
+  }
+
   const result: string[] = [];
   let i = 0;
   while (i < word.length) {
-    // Final stable syllables
-    const finalStableMatch = matchFinalStableSyllablesV27(word, i);
+    // Final stable syllables (不含-le, 因为已在顶层处理)
+    const finalStableMatch = matchFinalStableSyllablesV30(word, i);
     if (finalStableMatch) {
       result.push(finalStableMatch);
       i += finalStableMatch.length;
       continue;
     }
     // Magic-e结构
-    const magicEMatch = checkMagicEV27(word, i);
+    const magicEMatch = checkMagicEV30(word, i);
     if (magicEMatch) {
       result.push(magicEMatch);
       i += magicEMatch.length;
       continue;
     }
-    // digraph/trigraph/vowel team独立性优先
-    const digraphMatch = matchDigraphsV27(word, i);
+    // v3.1: digraph/trigraph/vowel team独立性优先（规则10升级）
+    const digraphMatch = matchDigraphsV31(word, i);
     if (digraphMatch) {
       result.push(digraphMatch);
       i += digraphMatch.length;
       continue;
     }
     // R-Controlled元音
-    const rControlledMatch = matchRControlledV27(word, i);
+    const rControlledMatch = matchRControlledV30(word, i);
     if (rControlledMatch) {
       result.push(rControlledMatch);
       i += rControlledMatch.length;
@@ -399,14 +487,14 @@ function splitMiddlePartV27(word: string): string[] {
       i += nasalMatch.length;
       continue;
     }
-    // 起始辅音组合
-    const consonantClusterMatch = matchConsonantClustersV27(word, i);
+    // v3.1 规则9: 辅音组合起始块识别
+    const consonantClusterMatch = matchConsonantClustersV31(word, i);
     if (consonantClusterMatch) {
       result.push(consonantClusterMatch);
       i += consonantClusterMatch.length;
       continue;
     }
-    // 双写辅音
+    // v3.0: 双写辅音（在非C+le情况下保留）
     const doubleConsonantMatch = matchDoubleConsonants(word, i);
     if (doubleConsonantMatch) {
       result.push(doubleConsonantMatch);
@@ -426,19 +514,30 @@ function splitMiddlePartV27(word: string): string[] {
   return result.filter(part => part.length > 0);
 }
 
-// v2.7 digraph/trigraph/vowel team独立性优先
-function matchDigraphsV27(word: string, index: number): string | null {
+// v3.1 规则10: Vowel Teams拆分优先级提升 + digraph/trigraph独立性
+function matchDigraphsV31(word: string, index: number): string | null {
   const consonantDigraphs = ['ch', 'sh', 'th', 'ph', 'wh', 'ck', 'ng', 'gh', 'tch', 'dge', 'wr', 'kn', 'gn', 'qu', 'squ'];
-  const vowelDigraphs = ['ai', 'ay', 'ee', 'ea', 'oa', 'oo', 'ue', 'ew', 'ie', 'igh', 'ou', 'ow', 'oy', 'oi', 'ey', 'ui'];
-  const allDigraphs = [...consonantDigraphs, ...vowelDigraphs];
-  for (const digraph of allDigraphs) {
+  
+  // v3.1 规则10: Vowel Teams 必须整体保留（优先级提升）
+  const vowelTeams = ['ai', 'ay', 'ee', 'ea', 'oa', 'oo', 'ue', 'ew', 'ie', 'igh', 'ou', 'ow', 'oy', 'oi', 'ey', 'ui'];
+  
+  // 优先匹配Vowel Teams（规则10）
+  for (const vowelTeam of vowelTeams) {
+    if (word.slice(index, index + vowelTeam.length) === vowelTeam) {
+      return vowelTeam;
+    }
+  }
+  
+  // 然后匹配辅音digraphs
+  for (const digraph of consonantDigraphs) {
     if (word.slice(index, index + digraph.length) === digraph) {
       return digraph;
     }
   }
+  
   return null;
 }
-function matchRControlledV27(word: string, index: number): string | null {
+function matchRControlledV30(word: string, index: number): string | null {
   const rControlled = ['ar', 'er', 'ir', 'or', 'ur', 'air', 'are', 'ear', 'ere', 'eir'];
   for (const pattern of rControlled) {
     if (word.slice(index, index + pattern.length) === pattern) {
@@ -447,8 +546,9 @@ function matchRControlledV27(word: string, index: number): string | null {
   }
   return null;
 }
-function matchFinalStableSyllablesV27(word: string, index: number): string | null {
-  const finalStables = ['le', 'tion', 'sion', 'ture', 'cian', 'sure', 'age', 'dge'];
+function matchFinalStableSyllablesV30(word: string, index: number): string | null {
+  // v3.0中 'le' 已在顶层处理，此处不再匹配
+  const finalStables = ['tion', 'sion', 'ture', 'cian', 'sure', 'age', 'dge'];
   for (const stable of finalStables) {
     if (word.slice(index, index + stable.length) === stable && index + stable.length >= word.length - 1) {
       return stable;
@@ -456,7 +556,7 @@ function matchFinalStableSyllablesV27(word: string, index: number): string | nul
   }
   return null;
 }
-function checkMagicEV27(word: string, index: number): string | null {
+function checkMagicEV30(word: string, index: number): string | null {
   if (index + 3 < word.length) {
     const consonant1 = word[index];
     const vowel = word[index + 1];
@@ -470,22 +570,35 @@ function checkMagicEV27(word: string, index: number): string | null {
   }
   return null;
 }
-function matchConsonantClustersV27(word: string, index: number): string | null {
-  const twoClusters = ['bl', 'br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'sc', 'sk', 'sl', 'sm', 'sn', 'sp', 'st', 'sw', 'tr', 'tw'];
-  const threeClusters = ['squ', 'scr', 'spl', 'spr', 'str', 'thr'];
+function matchConsonantClustersV31(word: string, index: number): string | null {
+  // v3.1 三辅音组合（优先级更高）
+  const threeClusters = ['squ', 'scr', 'spl', 'spr', 'str', 'thr', 'shr'];
+  
+  // v3.1 双辅音组合（规则9核心）
+  const twoClusters = [
+    'bl', 'br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 
+    'sc', 'sk', 'sl', 'sm', 'sn', 'sp', 'st', 'sw', 'tr', 'tw'
+  ];
+  
+  // 只在单词开头或元音后面匹配辅音组合
   if (index > 0 && !isVowel(word[index - 1])) {
     return null;
   }
+  
+  // 优先匹配三辅音组合
   for (const cluster of threeClusters) {
     if (word.slice(index, index + cluster.length) === cluster) {
       return cluster;
     }
   }
+  
+  // 然后匹配双辅音组合
   for (const cluster of twoClusters) {
     if (word.slice(index, index + cluster.length) === cluster) {
       return cluster;
     }
   }
+  
   return null;
 }
 function isVowel(char: string): boolean {
@@ -493,11 +606,24 @@ function isVowel(char: string): boolean {
 }
 
 // ========================================
-// 🎯 v2.7拼读规则辅助函数
+// 🎯 v3.0拼读规则辅助函数
 // ========================================
 
 /**
- * 匹配鼻音组合拼读块（v2.7规则）
+ * 匹配Final 'C+le'结尾 (v3.0核心)
+ */
+function matchFinalCleV30(word: string): string | null {
+  const endings = ['ble', 'cle', 'dle', 'fle', 'gle', 'kle', 'ple', 'tle', 'zle'];
+  for (const ending of endings) {
+    if (word.endsWith(ending) && word.length > ending.length) {
+      return ending;
+    }
+  }
+  return null;
+}
+
+/**
+ * 匹配鼻音组合拼读块
  */
 function matchNasalCombinations(word: string, index: number): string | null {
   const nasalCombinations = ['an', 'en', 'in', 'on', 'un', 'ang', 'ing'];
@@ -514,7 +640,7 @@ function matchNasalCombinations(word: string, index: number): string | null {
 // 已移除未使用的v2.3/v2.6旧函数，保持代码整洁
 
 /**
- * 匹配双写辅音（v2.7规则）
+ * 匹配双写辅音
  */
 function matchDoubleConsonants(word: string, index: number): string | null {
   if (index + 1 < word.length) {
@@ -638,8 +764,8 @@ export function debugShowDictionary(): void {
 }
 
 /**
- * 测试拼读拆分规则v2.7（开发调试用）
- * 基于音素映射对齐原则 + 起始组合保护 + digraph独立性优先
+ * 测试拼读拆分规则v3.1（开发调试用）
+ * 基于v3.1规则，新增辅音组合起始块识别和Vowel Teams拆分优先级
  */
 export function testPhonicsRules(): void {
   const isDebug = import.meta.env.DEV;
@@ -648,90 +774,90 @@ export function testPhonicsRules(): void {
     return;
   }
   
-  console.log('\n🎯 Oxford Phonics 拆分规则v2.7测试');
+  console.log('\n🎯 Oxford Phonics 拆分规则v3.1测试');
   console.log('📖 核心理念：拼读块 = 音素块（Phonics = Phonemes）');
-  console.log('📖 新增：起始组合保护 + digraph独立性优先');
-  console.log('📖 参考：Oxford_Phonics_Split_Rules_v2.7.md');
+  console.log('📖 新增：v3.1 辅音组合起始块识别 + Vowel Teams拆分优先级提升');
+  console.log('📖 参考：Oxford_Phonics_Split_Rules_v3.1.md');
   console.log('=' .repeat(60));
   
   const testCases = [
-    // v2.7核心示例（起始组合保护）
-    { word: 'elephant', expected: ['el', 'e', 'ph', 'ant'], ipa: '/ˈɛləfənt/', note: 'el起始保护, ph独立' },
-    { word: 'empty', expected: ['em', 'p', 't', 'y'], ipa: '/ˈɛmpti/', note: 'em起始保护' },
-    { word: 'energy', expected: ['en', 'er', 'g', 'y'], ipa: '/ˈɛnədʒi/', note: 'en起始保护' },
+    // v3.1核心：规则9 - 辅音组合起始块识别
+    { word: 'flower', expected: ['fl', 'ow', 'er'], ipa: '/ˈflaʊər/', note: 'v3.1-规则9：fl起始组合' },
+    { word: 'blue', expected: ['bl', 'ue'], ipa: '/bluː/', note: 'v3.1-规则9：bl起始组合' },
+    { word: 'truck', expected: ['tr', 'u', 'ck'], ipa: '/trʌk/', note: 'v3.1-规则9：tr起始组合' },
+    { word: 'green', expected: ['gr', 'ee', 'n'], ipa: '/griːn/', note: 'v3.1-规则9：gr起始组合' },
+    { word: 'plant', expected: ['pl', 'a', 'n', 't'], ipa: '/plænt/', note: 'v3.1-规则9：pl起始组合' },
+    { word: 'brave', expected: ['br', 'a', 'v', 'e'], ipa: '/breɪv/', note: 'v3.1-规则9：br起始组合' },
     
-    // digraph独立性优先
-    { word: 'phone', expected: ['ph', 'o', 'n', 'e'], ipa: '/fəʊn/', note: 'ph独立, o-e→/əʊ/' },
-    { word: 'graph', expected: ['gr', 'a', 'ph'], ipa: '/grɑːf/', note: 'ph独立成块' },
-    { word: 'laugh', expected: ['l', 'au', 'gh'], ipa: '/lɑːf/', note: 'gh独立, au→/ɑː/' },
+    // v3.1核心：规则10 - Vowel Teams拆分优先级
+    { word: 'enjoy', expected: ['en', 'joy'], ipa: '/ɪnˈdʒɔɪ/', note: 'v3.1-规则10：oy元音组合' },
+    { word: 'boy', expected: ['b', 'oy'], ipa: '/bɔɪ/', note: 'v3.1-规则10：oy元音组合' },
+    { word: 'paint', expected: ['p', 'ai', 'n', 't'], ipa: '/peɪnt/', note: 'v3.1-规则10：ai元音组合' },
+    { word: 'play', expected: ['pl', 'ay'], ipa: '/pleɪ/', note: 'v3.1-规则10：ay元音组合+pl组合' },
+    { word: 'coin', expected: ['c', 'oi', 'n'], ipa: '/kɔɪn/', note: 'v3.1-规则10：oi元音组合' },
     
-    // 不可拆组合保护
-    { word: 'write', expected: ['wr', 'i', 't', 'e'], ipa: '/raɪt/', note: 'wr→/r/（不可拆）' },
-    { word: 'know', expected: ['kn', 'ow'], ipa: '/nəʊ/', note: 'kn→/n/（不可拆）' },
-    { word: 'catch', expected: ['c', 'a', 'tch'], ipa: '/kætʃ/', note: 'tch→/tʃ/（不可拆）' },
-    { word: 'bridge', expected: ['br', 'i', 'dge'], ipa: '/brɪdʒ/', note: 'dge→/dʒ/（不可拆）' },
-    { word: 'fruit', expected: ['fr', 'ui', 't'], ipa: '/fruːt/', note: 'ui→/uː/' },
+    // v3.0核心保留验证：闭音节+C+le
+    { word: 'apple', expected: ['ap', 'ple'], ipa: '/ˈæpəl/', note: 'v3.0-闭音节+ple' },
+    { word: 'bottle', expected: ['bot', 'tle'], ipa: '/ˈbɒtəl/', note: 'v3.0-闭音节+tle' },
+    { word: 'little', expected: ['lit', 'tle'], ipa: '/ˈlɪtəl/', note: 'v3.0-闭音节+tle' },
+    { word: 'simple', expected: ['sim', 'ple'], ipa: '/ˈsɪmpəl/', note: 'v3.0-闭音节+ple' },
+    { word: 'table', expected: ['t', 'a', 'ble'], ipa: '/ˈteɪbəl/', note: 'v3.0-开音节+ble' },
+    { word: 'jungle', expected: ['jun', 'gle'], ipa: '/ˈdʒʌŋɡəl/', note: 'v3.0-闭音节+gle' },
+    { word: 'puzzle', expected: ['puz', 'zle'], ipa: '/ˈpʌzəl/', note: 'v3.0-闭音节+zle' },
+    { word: 'candle', expected: ['can', 'dle'], ipa: '/ˈkændəl/', note: 'v3.0-闭音节+dle' },
     
-    // 基础CVC（单音素拆分）
-    { word: 'cat', expected: ['c', 'a', 't'], ipa: '/kæt/', note: '单音素对齐' },
-    { word: 'dog', expected: ['d', 'o', 'g'], ipa: '/dɒg/', note: '单音素对齐' },
+    // v2.9保留验证：前后缀
+    { word: 'unlock', expected: ['un', 'l', 'o', 'ck'], ipa: '/ʌnˈlɒk/', note: 'v2.9-前缀un-' },
+    { word: 'redo', expected: ['re', 'd', 'o'], ipa: '/ˌriːˈduː/', note: 'v2.9-前缀re-' },
+    { word: 'running', expected: ['r', 'u', 'nn', 'ing'], ipa: '/ˈrʌnɪŋ/', note: 'v2.9-后缀ing' },
+    { word: 'played', expected: ['pl', 'ay', 'ed'], ipa: '/pleɪd/', note: 'v3.1混合：pl组合+ay元音+ed后缀' },
+    { word: 'kindness', expected: ['k', 'i', 'n', 'd', 'ness'], ipa: '/ˈkaɪndnəs/', note: 'v2.9-后缀ness' },
+
+    // v2.9保留验证：双写辅音（非C+le情况）
+    { word: 'rabbit', expected: ['r', 'a', 'bb', 'i', 't'], ipa: '/ˈræbɪt/', note: 'v2.9-双写bb' },
+
+    // v2.7核心示例（保留验证）
+    { word: 'elephant', expected: ['el', 'e', 'ph', 'ant'], ipa: '/ˈɛləfənt/', note: 'v2.7-el起始' },
+    { word: 'empty', expected: ['em', 'p', 't', 'y'], ipa: '/ˈɛmpti/', note: 'v2.7-em起始' },
+    { word: 'energy', expected: ['en', 'er', 'g', 'y'], ipa: '/ˈɛnədʒi/', note: 'v2.7-en起始' },
     
-    // Magic-e结构
-    { word: 'cake', expected: ['c', 'a', 'k', 'e'], ipa: '/keɪk/', note: 'a-e→/eɪ/' },
-    { word: 'bike', expected: ['b', 'i', 'k', 'e'], ipa: '/baɪk/', note: 'i-e→/aɪ/' },
-    { word: 'hope', expected: ['h', 'o', 'p', 'e'], ipa: '/həʊp/', note: 'o-e→/əʊ/' },
-    
-    // R-Controlled元音
-    { word: 'car', expected: ['c', 'ar'], ipa: '/kɑː/', note: 'ar→/ɑː/' },
-    { word: 'bird', expected: ['b', 'ir', 'd'], ipa: '/bɜːd/', note: 'ir→/ɜː/' },
-    { word: 'care', expected: ['c', 'are'], ipa: '/keə/', note: 'are→/eə/' },
-    
-    // 元音组合（Vowel Teams）
-    { word: 'rain', expected: ['r', 'ai', 'n'], ipa: '/reɪn/', note: 'ai→/eɪ/' },
-    { word: 'boat', expected: ['b', 'oa', 't'], ipa: '/bəʊt/', note: 'oa→/əʊ/' },
-    { word: 'night', expected: ['n', 'igh', 't'], ipa: '/naɪt/', note: 'igh→/aɪ/' },
-    
-    // 例外词（发音与拼写不一致）
-    { word: 'one', expected: ['one'], ipa: '/wʌn/', note: '例外词整体处理' },
-    { word: 'done', expected: ['done'], ipa: '/dʌn/', note: '例外词整体处理' },
-    { word: 'what', expected: ['what'], ipa: '/wɒt/', note: '例外词整体处理' },
-    
-    // 前缀后缀拆分
-    { word: 'reading', expected: ['re', 'a', 'd', 'ing'], ipa: '/ˈriːdɪŋ/', note: '前缀re-, 后缀-ing' },
-    { word: 'unhappy', expected: ['un', 'h', 'a', 'pp', 'y'], ipa: '/ʌnˈhæpi/', note: '前缀un-' },
-    { word: 'careful', expected: ['c', 'are', 'ful'], ipa: '/ˈkeəfʊl/', note: '后缀-ful' },
-    
-    // Final stable syllables
-    { word: 'picture', expected: ['p', 'i', 'c', 'ture'], ipa: '/ˈpɪktʃə/', note: '-ture结尾结构' },
-    { word: 'nation', expected: ['n', 'a', 'tion'], ipa: '/ˈneɪʃən/', note: '-tion结尾结构' },
-    { word: 'table', expected: ['t', 'a', 'ble'], ipa: '/ˈteɪbəl/', note: '-ble结尾结构' }
+    // 其他保留验证
+    { word: 'phone', expected: ['ph', 'o', 'n', 'e'], ipa: '/fəʊn/', note: 'Magic-e(待优化)' },
+    { word: 'graph', expected: ['gr', 'a', 'ph'], ipa: '/grɑːf/', note: 'v3.1混合：gr组合+ph结尾' },
+    { word: 'write', expected: ['wr', 'i', 't', 'e'], ipa: '/raɪt/', note: 'Magic-e(待优化)' },
+    { word: 'catch', expected: ['c', 'a', 'tch'], ipa: '/kætʃ/', note: '不可拆组合tch' },
+    { word: 'cake', expected: ['c', 'a', 'k', 'e'], ipa: '/keɪk/', note: 'Magic-e(待优化)' },
+    { word: 'car', expected: ['c', 'ar'], ipa: '/kɑː/', note: 'R-Controlled' },
+    { word: 'rain', expected: ['r', 'ai', 'n'], ipa: '/reɪn/', note: 'v3.1-规则10：ai元音组合' },
+    { word: 'one', expected: ['one'], ipa: '/wʌn/', note: '例外词' },
+    { word: 'picture', expected: ['pic', 'ture'], ipa: '/ˈpɪktʃə/', note: '-ture结尾' },
   ];
   
   let passCount = 0;
   const totalCount = testCases.length;
   
-  testCases.forEach(({ word, expected, ipa, note }, index) => {
-    const result = splitPhonics(word);
-    const passed = JSON.stringify(result) === JSON.stringify(expected);
+  testCases.forEach(testCase => {
+    const result = splitPhonics(testCase.word);
+    const passed = JSON.stringify(result) === JSON.stringify(testCase.expected);
+    const status = passed ? '✅' : '❌';
     
     if (passed) passCount++;
     
-    console.log(`${(index + 1).toString().padStart(2)}. ${word.padEnd(10)} → [${result.join('-').padEnd(18)}] ${passed ? '✅' : '❌'}`);
+    console.log(`${status} ${testCase.word.padEnd(12)} → [${result.join('-').padEnd(18)}] ${testCase.ipa.padEnd(15)} (${testCase.note})`);
+    
     if (!passed) {
-      console.log(`     预期: [${expected.join('-')}]`);
+      console.log(`    期望: [${testCase.expected.join('-')}]`);
     }
-    console.log(`     音标: ${ipa} | ${note}`);
-    console.log('');
   });
   
   console.log('=' .repeat(60));
-  console.log(`📊 v2.7音素对齐测试结果: ${passCount}/${totalCount} 通过 (${Math.round(passCount/totalCount*100)}%)`);
+  console.log(`📊 v3.1 规则测试结果: ${passCount}/${totalCount} 通过 (${Math.round(passCount/totalCount*100)}%)`);
   
   if (passCount === totalCount) {
-    console.log('🎉 所有测试通过！v2.7拆分规则运行正常，起始组合保护和digraph独立性成功！');
+    console.log('🎉 所有v3.1测试通过！辅音组合起始块识别和Vowel Teams拆分优化运行正常！');
   } else {
-    console.log('⚠️ 部分测试未通过，请检查v2.7音素对齐逻辑。');
-    console.log('📋 建议查看Oxford_Phonics_Split_Rules_v2.7.md了解详细规则');
+    console.log('⚠️ 部分测试未通过，请检查v3.1拆分逻辑。');
+    console.log('💡 重点检查：规则9（辅音组合fl/tr/bl/gr）和规则10（Vowel Teams ow/oy/oi/ai）');
   }
 }
 

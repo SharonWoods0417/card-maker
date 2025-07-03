@@ -3,6 +3,7 @@ import Header from './components/Header';
 import InputSection from './components/InputSection';
 import ExportSection from './components/ExportSection';
 import APIUsageDisplay from './components/APIUsageDisplay';
+import APITestSection from './components/APITestSection';
 import { WordCard } from './types';
 import { generateSampleWords } from './utils/sampleData';
 
@@ -55,7 +56,8 @@ function App() {
         {/* 🔧 调试功能区域 - API使用统计 */}
         {/* ⚠️ 删除此区域将移除API统计监控功能 */}
         {/* ======================================== */}
-        <div className="mb-6">
+        <div className="mb-6 space-y-4">
+          <APITestSection />
           <APIUsageDisplay 
             className="w-full" 
             showControls={showDebugControls}

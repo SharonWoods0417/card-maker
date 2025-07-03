@@ -5,7 +5,7 @@ import { apiUsageController } from '../services/apiUsageControl';
 
 // OpenRouter API配置
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'openai/gpt-3.5-turbo'; // 默认模型
+const DEFAULT_MODEL = 'openai/gpt-4.1-mini'; // 默认模型
 
 // 获取配置
 function getOpenRouterConfig() {
@@ -110,7 +110,7 @@ export async function getWordDataFromOpenAI(word: string): Promise<APIResponse<O
     }
 
     const data = await res.json();
-    const content = data.choices?.[0]?.message?.content?.trim();
+    let content = data.choices?.[0]?.message?.content?.trim();
     
     if (!content) {
       return { 
@@ -122,6 +122,14 @@ export async function getWordDataFromOpenAI(word: string): Promise<APIResponse<O
       };
     }
 
+    // 增加对Markdown代码块的兼容处理
+    const jsonRegex = /```json\s*([\s\S]*?)\s*```/;
+    const match = content.match(jsonRegex);
+    if (match && match[1]) {
+      content = match[1];
+      console.log('🧹 已清理Markdown代码块，提取出JSON内容。');
+    }
+
     let parsed: OpenAIWordData;
     try {
       parsed = JSON.parse(content);
@@ -131,7 +139,7 @@ export async function getWordDataFromOpenAI(word: string): Promise<APIResponse<O
         success: false, 
         error: { 
           error: true, 
-          message: `响应格式错误: ${String(parseError)}`,
+          message: `响应格式错误，无法解析JSON: ${String(parseError)}。原始响应: ${content}`,
           code: 'PARSE_ERROR'
         } 
       };

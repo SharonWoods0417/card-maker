@@ -176,135 +176,108 @@ const InputSection: React.FC<InputSectionProps> = ({ words, onWordsChange, onGen
 
   return (
     <div className="space-y-6">
-      {/* CSV上传区域 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center mb-4">
-          <FileText className="h-6 w-6 text-blue-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">方式一：上传CSV文件</h3>
-        </div>
-        
-        <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center bg-blue-50/50 hover:bg-blue-50 transition-colors">
-          <Upload className="mx-auto h-12 w-12 text-blue-500 mb-4" />
-          <div className="space-y-2">
-            <p className="text-gray-700 font-medium">
-              点击上传或拖拽CSV文件到此处
-            </p>
-            <p className="text-sm text-gray-500">
-              格式：word, ipa, meaningCn, sentenceEn, sentenceCn, imageUrl（除word外都可选）
-            </p>
-            <p className="text-xs text-blue-600 bg-blue-100 inline-block px-3 py-1 rounded-full">
-              支持Excel另存为CSV格式 | 自动补全缺失字段
-            </p>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="mt-4 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-          >
-            选择CSV文件
-          </button>
-        </div>
-      </div>
-
-      {/* 手动输入区域 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <Plus className="h-6 w-6 text-green-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">方式二：手动输入单词</h3>
-          </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={onGenerateSample}
-              className="flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
-            >
-              <Sparkles className="h-4 w-4 mr-1" />
-              生成示例数据
-            </button>
-            <button
-              onClick={addManualWord}
-              className="flex items-center text-green-600 hover:text-green-700 border border-green-600 hover:border-green-700 px-4 py-2 rounded-lg transition-colors text-sm font-medium"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              添加行
-            </button>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          {/* 说明文字 */}
-          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-            <p className="text-green-800 text-sm font-medium mb-1">
-              💡 智能输入模式 - 基于Oxford Phonics规则
-            </p>
-            <p className="text-green-700 text-xs">
-              只需输入英文单词，系统将自动生成音标、中文释义（含词性标注）、例句和配图。拼读拆分采用专业Oxford Phonics规则，适合小学生学习。
-            </p>
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* CSV上传区域 */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex-1">
+          <div className="flex items-center mb-4">
+            <FileText className="h-6 w-6 text-blue-600 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900">方式一：上传CSV文件</h3>
           </div>
           
-          {/* 输入区域 */}
-          <div className="space-y-3">
-            {manualWords.map((word, index) => (
-              <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 rounded-full text-sm font-bold">
-                  {index + 1}
-                </div>
-                <input
-                  type="text"
-                  placeholder="输入英文单词，如：apple, beautiful, run"
-                  value={word}
-                  onChange={(e) => updateManualWord(index, e.target.value)}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
-                />
-                {manualWords.length > 3 && (
-                  <button
-                    onClick={() => removeManualWord(index)}
-                    className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
-                )}
-              </div>
-            ))}
+          <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center bg-blue-50/50 hover:bg-blue-50 transition-colors">
+            <Upload className="mx-auto h-12 w-12 text-blue-500 mb-4" />
+            <div className="space-y-2">
+              <p className="text-gray-700 font-medium">
+                点击上传或拖拽CSV文件到此处
+              </p>
+              <p className="text-sm text-gray-500">
+                格式：word, ipa, meaningCn, sentenceEn, sentenceCn, imageUrl（除word外都可选）
+              </p>
+              <p className="text-xs text-blue-600 bg-blue-100 inline-block px-3 py-1 rounded-full">
+                支持Excel另存为CSV格式 | 自动补全缺失字段
+              </p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="mt-4 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            >
+              选择CSV文件
+            </button>
           </div>
+          <p className="text-center text-xs text-gray-400 mt-4">已加载 {words.length} 个单词卡片</p>
         </div>
-        
-        <div className="mt-6">
-          <button
-            onClick={applyManualWords}
-            className="w-full bg-green-600 text-white px-6 py-4 rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg"
-          >
-            智能生成单词卡片
-          </button>
+
+        {/* 手动输入区域 */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex-1">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <Sparkles className="h-6 w-6 text-purple-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">方式二：手动输入单词</h3>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={onGenerateSample}
+                className="flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+              >
+                <Sparkles className="h-4 w-4 mr-1" />
+                生成示例数据
+              </button>
+              <button
+                onClick={addManualWord}
+                className="flex items-center text-green-600 hover:text-green-700 border border-green-600 hover:border-green-700 px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                添加行
+              </button>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            {/* 输入区域 */}
+            <div className="space-y-3">
+              {manualWords.map((word, index) => (
+                <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 rounded-full text-sm font-bold">
+                    {index + 1}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="输入英文单词，如：apple, beautiful, run"
+                    value={word}
+                    onChange={(e) => updateManualWord(index, e.target.value)}
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
+                  />
+                  {manualWords.length > 3 && (
+                    <button
+                      onClick={() => removeManualWord(index)}
+                      className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <button
+              onClick={applyManualWords}
+              className="w-full bg-green-600 text-white px-6 py-4 rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg"
+            >
+              智能生成单词卡片
+            </button>
+          </div>
+          <p className="text-center text-xs text-gray-400 mt-4">输入单词后点击“生成卡片”即可</p>
         </div>
       </div>
-
-      {/* 状态提示 */}
-      {words.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-green-600 font-bold text-sm">{words.length}</span>
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-green-800 font-medium">
-                已成功生成 {words.length} 张单词卡片
-              </p>
-              <p className="text-green-600 text-sm">
-                请在右侧预览区查看卡片效果，确认无误后可导出PDF
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

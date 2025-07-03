@@ -123,37 +123,79 @@ export async function getWordEntry(word: string): Promise<WordEntry | null> {
   
   // 2. 调用AI补全
   if (isDebug) console.log(`🤖 调用AI补全: ${word}`);
+  
+  // 🎯 关键修复：无论AI是否成功，都先生成基础的音节拆分
+  const phonicsResult = splitPhonics(word);
+  if (isDebug) console.log(`🔧 生成音节拆分: ${word} → [${phonicsResult.join(', ')}]`);
+  
   try {
     const aiResponse = await getWordDataFromOpenAI(word);
     if (aiResponse.success && aiResponse.data) {
-      // 获取图片
+      // AI成功：获取图片并创建完整条目
       const imageResponse = await getImageForWord(word);
       const imageUrl = imageResponse.success ? imageResponse.data : undefined;
       
-             // 转换AI响应格式为词典格式
-       const wordEntry: WordEntry = {
-         word: word,
-         ipa: aiResponse.data.phonetic,
-         meaningCn: aiResponse.data.meaning,
-         sentenceEn: aiResponse.data.example,
-         sentenceCn: aiResponse.data.exampleTranslation,
-         phonics: splitPhonics(word), // 自动拆分音节（同步函数）
-         imageUrl: imageUrl,
-         source: 'ai' as const
-       };
+      const wordEntry: WordEntry = {
+        word: word,
+        ipa: aiResponse.data.phonetic,
+        meaningCn: aiResponse.data.meaning,
+        sentenceEn: aiResponse.data.example,
+        sentenceCn: aiResponse.data.exampleTranslation,
+        phonics: phonicsResult, // 使用已生成的音节拆分
+        imageUrl: imageUrl,
+        source: 'ai' as const
+      };
       
-      // 3. 保存到自定义词典
+      // 保存到自定义词典
       await saveToCustomDict(wordEntry);
       
       if (isDebug) console.log(`✅ AI补全成功并已保存: ${word}`);
       return wordEntry;
+    } else {
+      // AI失败但有响应：记录错误并使用fallback
+      if (isDebug) console.warn(`⚠️ AI调用失败但有响应: ${word}`, aiResponse.success ? 'Unknown error' : aiResponse.error?.message);
     }
   } catch (error) {
-    console.error(`❌ AI补全失败: ${word}`, error);
+    if (isDebug) console.error(`❌ AI补全失败: ${word}`, error);
   }
   
-  console.warn(`⚠️ 无法获取单词数据: ${word}`);
-  return null;
+  // 🎯 新增fallback逻辑：AI失败时创建基础条目
+  if (isDebug) console.log(`🔧 AI失败，创建fallback条目: ${word}`);
+  
+  // 尝试获取图片（即使AI失败，图片可能仍能获取）
+  let imageUrl: string | undefined;
+  try {
+    const imageResponse = await getImageForWord(word);
+    if (imageResponse.success) {
+      imageUrl = imageResponse.data;
+      if (isDebug) console.log(`📸 fallback模式获取图片成功: ${word}`);
+    } else {
+      if (isDebug) console.warn(`📸 fallback模式获取图片失败: ${word}`);
+    }
+  } catch (error) {
+    if (isDebug) console.warn(`📸 fallback模式图片获取异常: ${word}`, error);
+  }
+  
+  // 创建基础条目（至少包含单词和音节拆分）
+  // 🎯 改进：提供基本的音标估算
+  const basicIPA = `/${word}/`; // 简单的音标估算格式
+  
+  const fallbackEntry: WordEntry = {
+    word: word,
+    ipa: basicIPA, // 提供基本音标而不是空字符串
+    meaningCn: `${word}（AI调用失败，请手动补充释义）`, // 提供提示信息
+    sentenceEn: `I need to learn the word "${word}".`, // 提供基本例句
+    sentenceCn: `我需要学习单词"${word}"。`, // 提供基本翻译
+    phonics: phonicsResult, // 🎯 确保音节拆分总是存在
+    imageUrl: imageUrl, // 可能有图片，也可能没有
+    source: 'user' as const
+  };
+  
+  // 保存fallback条目到自定义词典
+  await saveToCustomDict(fallbackEntry);
+  if (isDebug) console.log(`💾 fallback条目已保存: ${word}`);
+  
+  return fallbackEntry;
 }
 
 // ========================================

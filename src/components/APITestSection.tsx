@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import { getWordDataFromOpenAI, checkOpenRouterConfig, getCurrentModel } from '../api/openai';
 import { findInLocalDictionary, loadCustomDictFromStorage } from '../utils/dictionary';
 import { OpenAIWordData, APIError } from '../api/types';
-import { Zap, CheckCircle, XCircle, AlertCircle, Search } from 'lucide-react';
+import { Zap, CheckCircle, XCircle, AlertCircle, Search, X } from 'lucide-react';
 
-const APITestSection: React.FC = () => {
+interface APITestSectionProps {
+  onBack: () => void;
+}
+
+const APITestSection: React.FC<APITestSectionProps> = ({ onBack }) => {
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
     success: boolean;
@@ -282,6 +286,16 @@ const APITestSection: React.FC = () => {
             🔄 重新获取
           </button>
         </div>
+      </div>
+
+      <div className="flex-grow p-6">
+        <button 
+          onClick={onBack}
+          className="absolute top-4 right-4 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-full p-2"
+        >
+          <X size={24} />
+        </button>
+        <h2 className="text-3xl font-bold mb-6 text-gray-800">🛠️ API & 功能测试面板</h2>
       </div>
     </div>
   );

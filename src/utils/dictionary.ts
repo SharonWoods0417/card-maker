@@ -114,10 +114,10 @@ export async function getWordEntry(word: string): Promise<WordEntry | null> {
     if (isDebug) console.log(`✅ 本地词典命中: ${word}`);
     
     // 🎯 字段自动补全：如果phonics字段缺失，自动补全
-    if (!localEntry.phonics || localEntry.phonics.length === 0) {
+    if (!localEntry.phonics) {
       if (isDebug) console.log(`🔧 自动补全phonics字段: ${word}`);
-      const phonicsResult = splitPhonics(word);
-      if (phonicsResult.length > 0) {
+      const phonicsResult = splitSyllables(word);
+      if (phonicsResult) {
         localEntry.phonics = phonicsResult;
         // 更新到自定义词典
         await saveToCustomDict(localEntry);
@@ -132,8 +132,8 @@ export async function getWordEntry(word: string): Promise<WordEntry | null> {
   if (isDebug) console.log(`🤖 调用AI补全: ${word}`);
   
   // 🎯 关键修复：无论AI是否成功，都先生成基础的音节拆分
-  const phonicsResult = splitPhonics(word);
-  if (isDebug) console.log(`🔧 生成音节拆分: ${word} → [${phonicsResult.join(', ')}]`);
+  const phonicsResult = splitSyllables(word);
+  if (isDebug) console.log(`🔧 生成音节拆分: ${word} → [${phonicsResult}]`);
   
   try {
     const aiResponse = await getWordDataFromOpenAI(word);
@@ -249,7 +249,7 @@ export function loadCustomDictFromStorage(): Dictionary {
     const stored = localStorage.getItem('customDictionary');
     return stored ? JSON.parse(stored) : {};
   } catch (error) {
-    console.error('加载自定义词典失败:', error);
+    console.error('从localStorage加载自定义词典失败:', error);
     return {};
   }
 }
@@ -277,152 +277,83 @@ export function exportCustomDict(): void {
 }
 
 // ========================================
-// 🔬 自然拼读拆分算法 (v3.3)
+// 🔬 自然拼读拆分算法 (v4.0 - Syllable Based)
 // ========================================
 
 /**
- * 主函数：按v3.3规则拆分单词
+ * 主函数：按v4.0音节规则拆分单词
+ * @param word 单词
+ * @returns {string} 用连字符'-'连接的音节字符串, e.g., "ap-ple"
  */
-export function splitPhonics(word: string): string[] {
+export function splitSyllables(word: string): string {
     word = word.toLowerCase().trim();
-    if (!word) return [];
+    if (!word) return '';
 
-    // 步骤 1: 检查例外词表
-    const exceptionResult = checkExceptionWordsV30(word);
-    if (exceptionResult) {
-        return exceptionResult;
-    }
-
-    // 步骤 2: CVC 短单词简化规则
-    if (isCVCPattern(word)) {
-        return [word];
+    // 规则 1: 复合词优先处理 (简化版，可扩展)
+    const compoundWords: Record<string, string> = {
+        'football': 'foot-ball',
+        'watermelon': 'wa-ter-mel-on',
+        'pancake': 'pan-cake',
+        'cannot': 'can-not'
+    };
+    if (compoundWords[word]) {
+        return compoundWords[word];
     }
     
-    // 步骤 3: 核心逻辑 - 先拆分音节
-    const syllables = splitSyllablesV33(word);
+    // 规则 2 & 3: 前后缀和稳定词尾处理
+    const prefixes = ['un', 're', 'dis', 'mis', 'pre', 'ex', 'in', 'im', 'ir', 'il', 'sub', 'inter', 'over', 'under'];
+    const suffixes = ['ing', 'ed', 'tion', 'sion', 'ture', 'ment', 'ness', 'ly', 'able', 'ous', 'ful', 'less'];
     
-    // 步骤 4: 在每个音节内部进行拼读块拆分
-    const finalSplit: string[] = [];
-    syllables.forEach(syllable => {
-        // 如果音节本身就是个有意义的拼读块 (如 ap, ple, com)，则不再细分
-        if (isMeaningfulSyllable(syllable)) {
-            finalSplit.push(syllable);
-            return;
+    for (const prefix of prefixes) {
+        if (word.startsWith(prefix) && word.length > prefix.length) {
+            return `${prefix}-${splitSyllables(word.slice(prefix.length))}`;
         }
-
-        let i = 0;
-        while (i < syllable.length) {
-            // 贪心匹配，从长到短尝试匹配拼读模式
-            const pattern = matchPhonicsPatternV32(syllable, i);
-            if (pattern) {
-                finalSplit.push(pattern);
-                i += pattern.length;
-            } else {
-                // 如果没有匹配，则单个字母作为一块
-                finalSplit.push(syllable[i]);
-                i++;
+    }
+    
+    for (const suffix of suffixes) {
+        if (word.endsWith(suffix) && word.length > suffix.length) {
+            const stem = word.slice(0, word.length - suffix.length);
+            if (countVowels(stem) > 0) {
+                 return `${splitSyllables(stem)}-${suffix}`;
             }
         }
-    });
-
-    return finalSplit;
-}
-
-// v3.0 异常单词表 (持续更新)
-function checkExceptionWordsV30(word: string): string[] | null {
-  const exceptions: Record<string, string[]> = {
-    'said': ['s', 'ai', 'd'], 'have': ['h', 'a', 've'],
-    'one': ['one'], 'two': ['two'], 'done': ['done'],
-    'gone': ['g', 'o', 'ne'], 'some': ['s', 'o', 'me'],
-    'come': ['c', 'o', 'me'], 'love': ['l', 'o', 've'],
-    'give': ['g', 'i', 've'], 'live': ['l', 'i', 've'],
-    'move': ['m', 'o', 've'], 'lose': ['l', 'o', 'se'],
-    'above': ['a', 'b', 'o', 've'], 'what': ['wh', 'a', 't'],
-    'who': ['wh', 'o'], 'where': ['wh', 'ere'],
-  };
-  return exceptions[word] || null;
-}
-
-// v3.3 音节拆分算法 (更稳定)
-function splitSyllablesV33(word: string): string[] {
-    if (word.length <= 3) return [word];
-    
-    // 规则1: 优先处理 C+le 结尾
-    if (word.length > 2 && word.endsWith('le') && !isVowel(word[word.length - 3])) {
-        const splitPoint = word.length - 3;
-        const stem = word.substring(0, splitPoint);
-        const ending = word.substring(splitPoint);
-        // 对主干部分递归拆分
-        return [...splitSyllablesV33(stem), ending];
     }
 
-    // 使用正则表达式查找元音组
-    const vowelGroups = word.match(/[aeiouy]+/g) || [];
-    if (vowelGroups.length <= 1) {
-        return [word]; // 单音节词
-    }
-
-    // 规则2: VCCV (两个元音之间有两个辅音) -> 在辅音之间拆分
-    // e.g., com-puter, ap-ple, lit-tle
-    let tempWord = word;
-    const vccvRegex = /([aeiouy])([bcdfghjklmnpqrstvwxyz]{2})([aeiouy])/g;
-    let match;
-    while ((match = vccvRegex.exec(tempWord)) !== null) {
-        const splitPoint = match.index + 2; // v-c | c-v
-        return [tempWord.substring(0, splitPoint), ...splitSyllablesV33(tempWord.substring(splitPoint))];
-    }
-
-    // 规则3: VCV (两个元音之间有一个辅音) -> 在辅音前拆分
-    // e.g., o-pen, mu-sic
-    const vcvRegex = /([aeiouy])([bcdfghjklmnpqrstvwxyz])([aeiouy])/g;
-    match = vcvRegex.exec(tempWord);
-    if (match) {
-        const splitPoint = match.index + 1; // v | c-v
-        return [tempWord.substring(0, splitPoint), ...splitSyllablesV33(tempWord.substring(splitPoint))];
+    if (word.length > 3 && word.endsWith('le') && !isVowel(word[word.length - 3])) {
+        const stem = word.slice(0, word.length - 3);
+        if (countVowels(stem) > 0) {
+             return `${splitSyllables(stem)}-${word.slice(word.length - 3)}`;
+        }
     }
     
-    return [word]; // 如果以上规则都不匹配，则视为单音节
-}
-
-// v3.2 拼读块查表规则
-function matchPhonicsPatternV32(word: string, index: number): string | null {
-  const patterns = [
-    // 3-letter
-    'tch', 'dge', 'air', 'ear', 'eer', 'all', 'ell', 'ill', 'oll', 'ull',
-    'ack', 'eck', 'ick', 'ock', 'uck', 'ank', 'enk', 'ink', 'onk', 'unk',
-    'ang', 'eng', 'ing', 'ong', 'ung',
-    // 2-letter
-    'ch', 'sh', 'th', 'ph', 'wh', 'gh', 'ck', 'kn', 'gn', 'wr', 'mb',
-    'ai', 'ay', 'ea', 'ee', 'ei', 'ey', 'ie', 'oa', 'oe', 'oi', 'oy',
-    'oo', 'ou', 'ow', 'ue', 'ui', 'ar', 'er', 'ir', 'or', 'ur',
-    'bl', 'br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr',
-    'sc', 'sk', 'sl', 'sm', 'sn', 'sp', 'st', 'sw', 'tr', 'tw',
-    'ft', 'ld', 'lk', 'lp', 'lt', 'mp', 'nd', 'nk', 'nt', 'pt',
-    'an', 'en', 'in', 'on', 'un'
-  ];
-  // 无需排序，因为新逻辑会优先使用音节
-  
-  for (const p of patterns) {
-    if (word.substring(index, index + p.length) === p) {
-      return p;
+    // 规则 4 & 5 & 6: VCCV, VCV 规则
+    const chars = word.split('');
+    let vowelsIndices = chars.map((c, i) => isVowel(c) ? i : -1).filter(i => i !== -1);
+    
+    if (vowelsIndices.length <= 1) {
+        return word; // 单音节词
     }
-  }
-  return null;
+
+    for (let i = 0; i < vowelsIndices.length - 1; i++) {
+        const v1_idx = vowelsIndices[i];
+        const v2_idx = vowelsIndices[i+1];
+        const consonantsBetween = word.substring(v1_idx + 1, v2_idx);
+
+        if (consonantsBetween.length === 2) { // VCCV
+            const splitPoint = v1_idx + 2;
+            return `${word.slice(0, splitPoint)}-${splitSyllables(word.slice(splitPoint))}`;
+        }
+        if (consonantsBetween.length === 1) { // VCV
+            const splitPoint = v1_idx + 1;
+            return `${word.slice(0, splitPoint)}-${splitSyllables(word.slice(splitPoint))}`;
+        }
+    }
+
+    return word; // Fallback
 }
 
-// v3.3 判断一个音节是否是"有意义"的，无需再拆分
-function isMeaningfulSyllable(syllable: string): boolean {
-    const meaningfulUnits = [
-        'ap', 'ple', 'com', 'lit', 'tle', 'ter', // 常用音节
-        'tion', 'sion', 'ture', 'ment' // 常见后缀
-    ];
-    return meaningfulUnits.includes(syllable);
-}
-
-// v3.2 CVC简化规则
-function isCVCPattern(word: string): boolean {
-  if (word.length !== 3) return false;
-  return !isVowel(word[0]) && isVowel(word[1]) && !isVowel(word[2]);
+function countVowels(word: string): number {
+    return word.split('').filter(isVowel).length;
 }
 
 // ========================================
@@ -526,7 +457,7 @@ export function debugShowDictionary(): void {
 }
 
 /**
- * 测试拼读拆分规则v3.3
+ * 测试音节拆分规则v4.0
  */
 export function testPhonicsRules(): void {
   const isDebug = import.meta.env.DEV;
@@ -535,63 +466,50 @@ export function testPhonicsRules(): void {
     return;
   }
   
-  console.log('\n🎯 Oxford Phonics 拆分规则v3.3测试');
-  console.log('📖 核心理念：音节优先，再拆分拼读块');
-  console.log('📖 新增：v3.3 稳定版音节拆分算法');
-  console.log('📖 参考：Oxford_Phonics_Split_Rules_v3.2.md');
+  console.log('\n🎯 Syllable Split Rules v4.0 Test');
+  console.log('📖 核心理念: 基于音节规则的层级拆分');
+  console.log('📖 参考: doc/phonics_split_rules_v4.0_syllable.md');
   console.log('=' .repeat(60));
   
   const testCases = [
-    { word: 'apple', expected: ['ap', 'ple'], note: 'v3.3-C+le规则' },
-    { word: 'little', expected: ['lit', 'tle'], note: 'v3.3-C+le规则' },
-    { word: 'computer', expected: ['com', 'pu', 'ter'], note: 'v3.3-VCCV规则' },
-    { word: 'open', expected: ['o', 'pen'], note: 'v3.3-VCV规则' },
-    { word: 'music', expected: ['mu', 'sic'], note: 'v3.3-VCV规则' },
-    { word: 'rabbit', expected: ['rab', 'bit'], note: 'v3.3-VCCV规则' },
-    { word: 'cat', expected: ['cat'], note: 'v3.3-CVC简化' },
-    { word: 'building', expected: ['build', 'ing'], note: 'v3.3-拼读块识别' },
-    { word: 'scientist', expected: ['sci', 'en', 'tist'], note: 'v3.3-多音节' },
-    { word: 'church', expected: ['ch', 'ur', 'ch'], note: 'v3.3-拼读块识别' },
-    { word: 'school', expected: ['sch', 'oo', 'l'], note: 'v3.3-多字母拼读块' },
-    { word: 'beautiful', expected: ['beau', 't', 'i', 'ful'], note: 'v3.3-复杂元音组' },
-    { word: 'phonics', expected: ['phon', 'ics'], note: 'v3.3-VCCV规则' }
+      { word: 'rabbit', expected: 'rab-bit' },
+      { word: 'apple', expected: 'ap-ple' },
+      { word: 'watermelon', expected: 'wa-ter-mel-on' },
+      { word: 'disappear', expected: 'dis-ap-pear' }, // a-ppear is tricky
+      { word: 'tiger', expected: 'ti-ger' },
+      { word: 'celebrate', expected: 'cel-e-brate' },
+      { word: 'banana', expected: 'ba-na-na' },
+      { word: 'nation', expected: 'na-tion' },
+      { word: 'little', expected: 'lit-tle' },
+      { word: 'unhappy', expected: 'un-hap-py'},
+      { word: 'beautiful', expected: 'beau-ti-ful'}
   ];
   
   let passCount = 0;
   const totalCount = testCases.length;
-  const failedCases: { word: string, expected: string[], actual: string[] }[] = [];
+  const failedCases: { word: string, expected: string, actual: string }[] = [];
   
   testCases.forEach(testCase => {
-    // 修正：对computer这类词，预期结果是进一步细分的
-    let expectedResult = testCase.expected;
-    if (testCase.word === 'computer') expectedResult = ['com', 'p', 'u', 'ter'];
-    if (testCase.word === 'scientist') expectedResult = ['sci', 'en', 'tist']; // 修正：这个词的音节已经是拼读块
-    if (testCase.word === 'beautiful') expectedResult = ['beau', 't', 'i', 'ful'];
-    if (testCase.word === 'school') expectedResult = ['sch', 'ool'];
-
-
-    const result = splitPhonics(testCase.word);
-    const passed = JSON.stringify(result) === JSON.stringify(expectedResult);
+    const result = splitSyllables(testCase.word);
+    const passed = result === testCase.expected;
     const status = passed ? '✅' : '❌';
     
     if (passed) {
         passCount++;
     } else {
-        failedCases.push({ word: testCase.word, expected: expectedResult, actual: result });
+        failedCases.push({ word: testCase.word, expected: testCase.expected, actual: result });
     }
     
-    console.log(`${status} ${testCase.word.padEnd(12)} → [${result.join('-').padEnd(18)}] (期望: [${expectedResult.join('-')}])`);
+    console.log(`${status} ${testCase.word.padEnd(15)} → ${result.padEnd(20)} (期望: ${testCase.expected})`);
   });
   
   console.log('=' .repeat(60));
-  console.log(`📊 v3.3 规则测试结果: ${passCount}/${totalCount} 通过 (${Math.round(passCount/totalCount*100)}%)`);
+  console.log(`📊 v4.0 Syllable Test Result: ${passCount}/${totalCount} Passed (${Math.round(passCount/totalCount*100)}%)`);
   
-  if (passCount === totalCount) {
-    console.log('🎉 所有v3.3核心测试用例通过！新版音节拆分算法工作正常！');
-  } else {
-    console.log('⚠️ 部分测试未通过，请检查v3.3拆分逻辑。失败用例如下:');
+  if (passCount < totalCount) {
+    console.log('⚠️ Some test cases failed. Please review the logic. Failed cases:');
     failedCases.forEach(fail => {
-        console.log(`- ${fail.word}: 期望 [${fail.expected.join('-')}], 得到 [${fail.actual.join('-')}]`);
+        console.log(`- ${fail.word}: Expected [${fail.expected}], Got [${fail.actual}]`);
     });
   }
 }

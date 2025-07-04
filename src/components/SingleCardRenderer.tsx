@@ -85,7 +85,7 @@ const SingleCardRenderer: React.FC<SingleCardRendererProps> = ({
             
             {/* 自然拼读彩色色块 */}
             <div className="phonics-container">
-              {card.phonics?.map((syllable, index) => (
+              {card.phonics?.split('-').map((syllable, index) => (
                 <span 
                   key={index} 
                   className="phonics-block"

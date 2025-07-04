@@ -8,7 +8,7 @@ interface ExportSectionProps {
   words: WordCard[];
 }
 
-const ExportSection: React.FC<ExportSectionProps> = ({ words }) => {
+const ExportSection: React.FC<ExportSectionProps> = ({ words = [] }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [showBack, setShowBack] = useState(false);
   const [showPreview, setShowPreview] = useState(false);

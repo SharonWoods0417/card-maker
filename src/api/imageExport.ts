@@ -281,12 +281,12 @@ export async function captureA4Page(
             }, 1000); // 增加到1秒等待时间
           }).catch(() => {
             console.warn('⚠️ 克隆文档中字体加载失败，但继续执行');
-            setTimeout(() => {
-              console.log('DOM克隆和样式应用完成');
-              resolve();
+          setTimeout(() => {
+            console.log('DOM克隆和样式应用完成');
+            resolve();
             }, 1000);
           });
-        });
+                 });
        }
     });
     
@@ -383,9 +383,9 @@ export async function exportA4PagesToZip(
 
       try {
         const imageBlob = await captureA4Page(pageElement, options);
-        
-        // 添加到ZIP，文件名格式：page-1.png, page-2.png
-        zip.file(`page-${pageNumber}.png`, imageBlob);
+      
+      // 添加到ZIP，文件名格式：page-1.png, page-2.png
+      zip.file(`page-${pageNumber}.png`, imageBlob);
       } catch (error) {
         console.error(`页面 ${pageNumber} 截图失败:`, error);
         throw new Error(`页面 ${pageNumber} 截图失败: ${error instanceof Error ? error.message : '未知错误'}`);

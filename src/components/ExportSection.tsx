@@ -14,7 +14,7 @@ const ExportSection: React.FC<ExportSectionProps> = ({ words }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
-
+  
   const FONT_STYLE_ID = 'embedded-handwriting-font-style';
 
   const embedFont = (): Promise<void> => {
@@ -283,34 +283,34 @@ const ExportSection: React.FC<ExportSectionProps> = ({ words }) => {
                     ✅ 导出的图片尺寸：1588×2246像素（A4分辨率×2倍清晰度）<br/>
                     ✅ 每张卡片尺寸：321×453像素（85×120mm标准卡片尺寸）
                   </p>
-                </div>
-
-                {/* 页面切换控制 */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between mb-4">
-                    <button
-                      onClick={handlePrevPage}
-                      disabled={currentPage === 0}
-                      className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span>上一页</span>
-                    </button>
-                    
-                    <div className="text-sm text-gray-600" style={{ marginTop: '-8px' }}>
-                      第 {currentPage + 1} 页，共 {totalPages} 页
-                    </div>
-                    
-                    <button
-                      onClick={handleNextPage}
-                      disabled={currentPage === totalPages - 1}
-                      className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <span>下一页</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
                   </div>
-                )}
+
+                  {/* 页面切换控制 */}
+                  {totalPages > 1 && (
+                  <div className="flex items-center justify-between mb-4">
+                      <button
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 0}
+                        className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span>上一页</span>
+                      </button>
+                      
+                    <div className="text-sm text-gray-600" style={{ marginTop: '-8px' }}>
+                        第 {currentPage + 1} 页，共 {totalPages} 页
+                      </div>
+                      
+                      <button
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages - 1}
+                        className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span>下一页</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
 
                 {/* A4页面渲染 - 100%显示 */}
                 <div 

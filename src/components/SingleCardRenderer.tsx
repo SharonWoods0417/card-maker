@@ -100,22 +100,19 @@ const SingleCardRenderer: React.FC<SingleCardRendererProps> = ({
         // 反面：中文释义（含词性）+ 统一灰色例句容器
         <div className="card-back">
           <div className="meaning-text">
-            {generateMeaningWithPartOfSpeech(card.word, card.meaningCn)}
+            <div className="meaning-box">
+              {generateMeaningWithPartOfSpeech(card.word, card.meaningCn)}
+            </div>
           </div>
           
           {card.sentenceEn && (
             <div className="unified-sentence-container">
-              {/* 例句1 */}
               <div className="sentence-item">
                 <div className="sentence-english-line">
                   <span className="sentence-number">1.</span>
-                  <span className="sentence-english">
-                    {card.sentenceEn}
-                  </span>
+                  <span className="sentence-english">{card.sentenceEn}</span>
                 </div>
-                <div className="sentence-chinese">
-                  {card.sentenceCn}
-                </div>
+                <div className="sentence-chinese">{card.sentenceCn}</div>
               </div>
             </div>
           )}
